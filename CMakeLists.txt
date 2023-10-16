@@ -6,13 +6,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-Wall -Wextra -Werror -Wpedantic)
 
 add_library(data-structure INTERFACE)
-target_include_directories(data-structure INTERFACE src)
+target_include_directories(data-structure INTERFACE include)
 
 include(CTest)
 enable_testing()
-
-add_executable(test_1 test/test.cpp)
-target_link_libraries(test_1 data-structure)
-
-add_test(NAME test_1 COMMAND test_1)
-set_tests_properties(test_1 PROPERTIES TIMEOUT 10)
+add_subdirectory(test)
