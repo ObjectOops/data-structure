@@ -1,11 +1,11 @@
-add_executable(test_hash test_hash.cpp)
-add_executable(test_compare test_compare.cpp)
+set(test_names
+    test_hash
+    test_compare
+)
 
-target_link_libraries(test_hash data-structure)
-target_link_libraries(test_compare data-structure)
-
-add_test(NAME test_hash COMMAND test_hash)
-add_test(NAME test_compare COMMAND test_compare)
-
-set_tests_properties(test_hash PROPERTIES TIMEOUT 2)
-set_tests_properties(test_compare PROPERTIES TIMEOUT 2)
+foreach(test_name ${test_names})
+    add_executable(${test_name} ${test_name}.cpp)
+    target_link_libraries(${test_name} data-structure)
+    add_test(NAME ${test_name} COMMAND ${test_name})
+    set_tests_properties(${test_name} PROPERTIES TIMEOUT 2)
+endforeach()

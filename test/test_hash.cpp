@@ -7,11 +7,11 @@ int main() {
     
     assert(ds::default_hash(0) == 0ull);
     assert(ds::default_hash(0xFFFF) == 0xFFFFull);
-    // assert(ds::default_hash(-0xFFFF) == -0xFFFull);
+    assert(ds::default_hash(-0xFFFF) == 0xFFFFFFFFFFFF0001);
     
     assert(test.test_hash(0) == 0ull);
     assert(test.test_hash(0xFFFF) == 0xFFFFull);
-    // assert(test.test_hash(-0xFFFF) == -0xFFFull);
+    assert(test.test_hash(-0xFFFF) == 0xFFFFFFFFFFFF0001);
     
     return 0;
 }
