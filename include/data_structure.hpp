@@ -5,8 +5,8 @@
 template<\
     typename FirstType, \
     typename SecondType = int, \
-    typename Hash = ull (*) (FirstType), \
-    typename Compare = bool (*) (FirstType lhs, FirstType rhs), \
+    typename Hash = ull (*) (const FirstType &), \
+    typename Compare = bool (*) (const FirstType &lhs, const FirstType &rhs), \
     int N = -1\
 >
 
@@ -23,11 +23,15 @@ namespace ds {
 
     typedef unsigned long long ull;
 
-    template<typename Type> ull default_hash(Type);
-    ull default_hash(float);
-    ull default_hash(double);
+    template<typename Type>
+    inline ull default_hash(const Type &);
+    template<typename Type>
+    inline ull default_hash<int>(int);
 
-    bool default_compare(int, int);
+    template<typename Type>
+    inline bool default_compare(const Type &, const Type &);
+    template<typename Type>
+    inline ull default_hash<int, int>(int, int);
 
     TEMPLATE_CLASS class structure {
 
@@ -44,20 +48,21 @@ namespace ds {
         hash {hash}, compare {compare} 
     {}
 
-
-    // template<typename Type>
-    // inline ull default_hash(const Type &value) {
-    //     return value.hash();
-    // }
-    inline ull default_hash(int value) {
+    template<typename Type>
+    inline ull default_hash(const Type &value) {
+        return value.hash();
+    }
+    template<typename Type>
+    inline ull default_hash<int>(int value) {
         return value;
     }
 
-    // template<typename Type>
-    // inline bool default_compare(const Type &lhs, const Type &rhs) {
-    //     return lhs < rhs;
-    // }
-    inline bool default_compare(int lhs, int rhs) {
+    template<typename Type>
+    inline bool default_compare(const Type &lhs, const Type &rhs) {
+        return lhs < rhs;
+    }
+    template<typename Type>
+    inline ull default_hash<int, int>(int lhs, int rhs) {
         return lhs < rhs;
     }
 }
