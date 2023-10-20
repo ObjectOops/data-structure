@@ -6,7 +6,7 @@ template<\
     typename FirstType, \
     typename SecondType = int, \
     typename Hash = ull (*) (const FirstType &), \
-    typename Compare = bool (*) (const FirstType &lhs, const FirstType &rhs), \
+    typename Compare = bool (*) (const FirstType &, const FirstType &), \
     int N = -1\
 >
 
@@ -25,13 +25,13 @@ namespace ds {
 
     template<typename Type>
     inline ull default_hash(const Type &);
-    template<typename Type>
-    inline ull default_hash<int>(int);
+    template<>
+    inline ull default_hash<int>(const int &);
 
     template<typename Type>
     inline bool default_compare(const Type &, const Type &);
-    template<typename Type>
-    inline ull default_hash<int, int>(int, int);
+    template<>
+    inline bool default_compare<int>(const int &, const int &);
 
     TEMPLATE_CLASS class structure {
 
@@ -52,8 +52,9 @@ namespace ds {
     inline ull default_hash(const Type &value) {
         return value.hash();
     }
-    template<typename Type>
-    inline ull default_hash<int>(int value) {
+
+    template<>
+    inline ull default_hash<int>(const int &value) {
         return value;
     }
 
@@ -61,8 +62,8 @@ namespace ds {
     inline bool default_compare(const Type &lhs, const Type &rhs) {
         return lhs < rhs;
     }
-    template<typename Type>
-    inline ull default_hash<int, int>(int lhs, int rhs) {
+    template<>
+    inline bool default_compare<int>(const int &lhs, const int &rhs) {
         return lhs < rhs;
     }
 }
