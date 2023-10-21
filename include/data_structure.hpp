@@ -1,6 +1,8 @@
 #ifndef DATA_STRUCTURE_HPP
 #define DATA_STRUCTURE_HPP
 
+#include <string.h>
+
 #define TEMPLATE_CLASS \
 template<\
     typename FirstType, \
@@ -19,20 +21,31 @@ template<\
     int N\
 >
 
+#define DEFAULT_HASH(PT) \
+template<> \
+inline ull default_hash<PT>(const PT &value) { \
+    return value; \
+}
+
+
 namespace ds {
 
     typedef unsigned long long ull;
 
+    // The class templates require the default hash and comparison functions 
+    // to take all parameters by reference, including primitive types.
+
     template<typename Type>
     inline ull default_hash(const Type &);
-    template<>
-    inline ull default_hash<int>(const int &);
 
     template<typename Type>
     inline bool default_compare(const Type &, const Type &);
-    template<>
-    inline bool default_compare<int>(const int &, const int &);
 
+    struct str {
+        char *p;
+        ull n;
+    };
+    
     TEMPLATE_CLASS class structure {
 
         private:
@@ -52,11 +65,25 @@ namespace ds {
     inline ull default_hash(const Type &value) {
         return value.hash();
     }
-
     template<>
-    inline ull default_hash<int>(const int &value) {
-        return value;
+    inline ull default_hash<str>(const str &s) {
+        ull len = s.n / 8 + 1;
+        ull *values {new ull [len]};
+        memcpy(values, s.p, s.n);
+        ull h {};
+        return s.n;
     }
+    DEFAULT_HASH(short)
+    DEFAULT_HASH(int)
+    DEFAULT_HASH(long)
+    DEFAULT_HASH(long long)
+    DEFAULT_HASH(unsigned short)
+    DEFAULT_HASH(unsigned int)
+    DEFAULT_HASH(unsigned long)
+    DEFAULT_HASH(ull)
+    DEFAULT_HASH(char)
+    DEFAULT_HASH(char16_t)
+    DEFAULT_HASH(char32_t)
 
     template<typename Type>
     inline bool default_compare(const Type &lhs, const Type &rhs) {
@@ -70,5 +97,6 @@ namespace ds {
 
 #undef TEMPLATE_CLASS
 #undef TEMPLATE_FUNC
+#undef DEFAULT_HASH
 
 #endif
