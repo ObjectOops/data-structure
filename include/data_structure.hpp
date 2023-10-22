@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-#define TEMPLATE_CLASS \
+#define CLASS_TEMPLATE \
 template<\
     typename FirstType, \
     typename SecondType = int, \
@@ -12,7 +12,7 @@ template<\
     int N = -1\
 >
 
-#define TEMPLATE_FUNC \
+#define FUNC_TEMPLATE \
 template<\
     typename FirstType, \
     typename SecondType, \
@@ -27,6 +27,11 @@ inline ull default_hash<PT>(const PT &value) { \
     return value; \
 }
 
+#define DEFAULT_COMPARE(PT) \
+template<> \
+inline bool default_compare<PT>(const PT &lhs, const PT &rhs) { \
+    return lhs < rhs; \
+}
 
 namespace ds {
 
@@ -46,7 +51,7 @@ namespace ds {
         ull n;
     };
     
-    TEMPLATE_CLASS class structure {
+    CLASS_TEMPLATE class structure {
 
         private:
         
@@ -57,7 +62,7 @@ namespace ds {
         structure(const Hash &hash = default_hash, const Compare &compare = default_compare);
     };
 
-    TEMPLATE_FUNC structure<FirstType, SecondType, Hash, Compare, N>::structure(const Hash &hash, const Compare &compare) : 
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, N>::structure(const Hash &hash, const Compare &compare) : 
         hash {hash}, compare {compare} 
     {}
 
@@ -71,7 +76,10 @@ namespace ds {
         ull *values {new ull [len]};
         memcpy(values, s.p, s.n);
         ull h {};
-        return s.n;
+        for (ull i {}; i < len; ++i) {
+            h ^= values[i] * (i + 1);
+        }
+        return h;
     }
     DEFAULT_HASH(short)
     DEFAULT_HASH(int)
@@ -82,21 +90,33 @@ namespace ds {
     DEFAULT_HASH(unsigned long)
     DEFAULT_HASH(ull)
     DEFAULT_HASH(char)
+    DEFAULT_HASH(wchar_t)
     DEFAULT_HASH(char16_t)
     DEFAULT_HASH(char32_t)
+    DEFAULT_HASH(bool)
 
     template<typename Type>
     inline bool default_compare(const Type &lhs, const Type &rhs) {
         return lhs < rhs;
     }
-    template<>
-    inline bool default_compare<int>(const int &lhs, const int &rhs) {
-        return lhs < rhs;
-    }
+    DEFAULT_COMPARE(short)
+    DEFAULT_COMPARE(int)
+    DEFAULT_COMPARE(long)
+    DEFAULT_COMPARE(long long)
+    DEFAULT_COMPARE(unsigned short)
+    DEFAULT_COMPARE(unsigned int)
+    DEFAULT_COMPARE(unsigned long)
+    DEFAULT_COMPARE(ull)
+    DEFAULT_COMPARE(char)
+    DEFAULT_COMPARE(wchar_t)
+    DEFAULT_COMPARE(char16_t)
+    DEFAULT_COMPARE(char32_t)
+    DEFAULT_COMPARE(bool)
 }
 
-#undef TEMPLATE_CLASS
-#undef TEMPLATE_FUNC
+#undef CLASS_TEMPLATE
+#undef FUNC_TEMPLATE
 #undef DEFAULT_HASH
+#undef DEFAULT_COMPARE
 
 #endif
