@@ -70,6 +70,7 @@ namespace ds {
     inline ull default_hash(const Type &value) {
         return value.hash();
     }
+    // Modified K&R hash function.
     template<>
     inline ull default_hash<str>(const str &s) {
         ull len = s.n / 8 + 1;
@@ -77,7 +78,8 @@ namespace ds {
         memcpy(values, s.p, s.n);
         ull h {};
         for (ull i {}; i < len; ++i) {
-            h ^= values[i] * (i + 1);
+            h *= 31;
+            h += values[i];
         }
         return h;
     }
