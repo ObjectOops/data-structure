@@ -101,6 +101,10 @@ namespace ds {
     inline bool default_compare(const Type &lhs, const Type &rhs) {
         return lhs < rhs;
     }
+    template<>
+    inline bool default_compare<str>(const str &lhs, const str &rhs) {
+        return strncmp(lhs.p, rhs.p, lhs.n < rhs.n ? lhs.n : rhs.n);
+    }
     DEFAULT_COMPARE(short)
     DEFAULT_COMPARE(int)
     DEFAULT_COMPARE(long)
