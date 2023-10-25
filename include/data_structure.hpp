@@ -49,6 +49,10 @@ namespace ds {
     struct str {
         char *p;
         ull n;
+        
+        inline bool operator<(const str &other) {
+            return strncmp(this->p, other.p, this->n < other.n ? this->n : other.n) < 0;
+        }
     };
     
     CLASS_TEMPLATE class structure {
@@ -103,7 +107,7 @@ namespace ds {
     }
     template<>
     inline bool default_compare<str>(const str &lhs, const str &rhs) {
-        return strncmp(lhs.p, rhs.p, lhs.n < rhs.n ? lhs.n : rhs.n);
+        return strncmp(lhs.p, rhs.p, lhs.n < rhs.n ? lhs.n : rhs.n) < 0;
     }
     DEFAULT_COMPARE(short)
     DEFAULT_COMPARE(int)

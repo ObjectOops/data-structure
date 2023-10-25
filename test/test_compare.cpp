@@ -1,16 +1,48 @@
 #include <cassert>
+#include <iostream>
+
 #include "../include/data_structure.hpp"
 
+#define TEST_TYPE(TYPE) \
+ds::structure<TYPE> test_##TYPE {}; \
+assert(ds::default_compare((TYPE)0, (TYPE)1) == ((TYPE)0 < (TYPE)1)); \
+assert(ds::default_compare((TYPE)1, (TYPE)0) == ((TYPE)1 < (TYPE)0)); \
+assert(ds::default_compare((TYPE)1, (TYPE)1) == ((TYPE)1 < (TYPE)1)); \
+assert(test_##TYPE.compare((TYPE)0, (TYPE)1) == ((TYPE)0 < (TYPE)1)); \
+assert(test_##TYPE.compare((TYPE)1, (TYPE)0) == ((TYPE)1 < (TYPE)0)); \
+assert(test_##TYPE.compare((TYPE)1, (TYPE)1) == ((TYPE)1 < (TYPE)1));
+
+typedef long long ll;
+typedef unsigned short us;
+typedef unsigned int ui;
+typedef unsigned long ul;
+typedef unsigned long long ull;
+
 int main() {
-    ds::structure<int> test {};
 
-    assert(ds::default_compare(0, 1) == (0 < 1));
-    assert(ds::default_compare(1, 0) == (1 < 0));
-    assert(ds::default_compare(1, 1) == (1 < 1));
+    TEST_TYPE(short)
+    TEST_TYPE(int)
+    TEST_TYPE(long)
+    TEST_TYPE(ll)
+    TEST_TYPE(us)
+    TEST_TYPE(ui)
+    TEST_TYPE(ul)
+    TEST_TYPE(ull)
+    TEST_TYPE(char)
+    TEST_TYPE(wchar_t)
+    TEST_TYPE(char16_t)
+    TEST_TYPE(char32_t)
+    TEST_TYPE(bool)
 
-    assert(test.compare(0, 1) == (0 < 1));
-    assert(test.compare(1, 0) == (1 < 0));
-    assert(test.compare(1, 1) == (1 < 1));
+    ds::str s1 {new char [1000], 5};
+    ds::str s2 {new char [1000], 5};
+    sprintf(s1.p, "test1");
+    sprintf(s2.p, "test2");
+
+    assert(ds::default_compare(s1, s2));
+    assert(s1 < s2);
+    assert(!(ds::default_compare(s2, s1)));
+    assert(!(s2 < s1));
 
     return 0;
 }
