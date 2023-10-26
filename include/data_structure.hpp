@@ -54,21 +54,29 @@ namespace ds {
             return strncmp(this->p, other.p, this->n < other.n ? this->n : other.n) < 0;
         }
     };
+
+    template<typename Type, typename ...Types>
+    inline Type *args(const Types &...argl) {
+        return new Type [sizeof...(Types)] {argl...};
+    }
     
     CLASS_TEMPLATE class structure {
 
         private:
+        FirstType *placeholder;
         
         public:
         Hash hash;
         Compare compare;
 
-        structure(const Hash &hash = default_hash, const Compare &compare = default_compare);
+        structure(FirstType * = nullptr, const Hash &hash = default_hash, const Compare &compare = default_compare);
     };
 
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, N>::structure(const Hash &hash, const Compare &compare) : 
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, N>::structure(FirstType *argv, const Hash &hash, const Compare &compare) : 
         hash {hash}, compare {compare} 
-    {}
+    {
+        placeholder = argv;
+    }
 
     template<typename Type>
     inline ull default_hash(const Type &value) {
