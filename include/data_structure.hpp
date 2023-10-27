@@ -8,8 +8,7 @@ template<\
     typename FirstType, \
     typename SecondType = int, \
     typename Hash = ull (*) (const FirstType &), \
-    typename Compare = bool (*) (const FirstType &, const FirstType &), \
-    int N = -1\
+    typename Compare = bool (*) (const FirstType &, const FirstType &) \
 >
 
 #define FUNC_TEMPLATE \
@@ -17,8 +16,7 @@ template<\
     typename FirstType, \
     typename SecondType, \
     typename Hash, \
-    typename Compare, \
-    int N\
+    typename Compare \
 >
 
 #define DEFAULT_HASH(PT) \
@@ -55,9 +53,24 @@ namespace ds {
         }
     };
 
+    template<typename T>
+    struct _argv {
+
+        template<typename Type, typename ...Types>
+        friend _argv<Type> args(const Types &...);
+
+        // FUNC_TEMPLATE
+        // friend structure<FirstType, SecondType, Hash, Compare>::structure;
+
+        private:
+        T *v;
+        _argv(T *v) {
+            this->v = v;
+        }
+    };
     template<typename Type, typename ...Types>
-    inline Type *args(const Types &...argl) {
-        return new Type [sizeof...(Types)] {argl...};
+    inline _argv<Type> args(const Types &...argl) {
+        return _argv<Type> {new Type [sizeof...(Types)] {argl...}};
     }
     
     CLASS_TEMPLATE class structure {
@@ -69,13 +82,13 @@ namespace ds {
         Hash hash;
         Compare compare;
 
-        structure(FirstType * = nullptr, const Hash &hash = default_hash, const Compare &compare = default_compare);
+        structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
     };
 
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, N>::structure(FirstType *argv, const Hash &hash, const Compare &compare) : 
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<FirstType> argv, ull n, const Hash &hash, const Compare &compare) : 
         hash {hash}, compare {compare} 
     {
-        placeholder = argv;
+        placeholder = argv.v;
     }
 
     template<typename Type>
