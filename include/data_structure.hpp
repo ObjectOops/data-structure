@@ -59,18 +59,21 @@ namespace ds {
         template<typename Type, typename ...Types>
         friend _argv<Type> args(const Types &...);
 
-        // FUNC_TEMPLATE
-        // friend structure<FirstType, SecondType, Hash, Compare>::structure;
+        FUNC_TEMPLATE
+        friend class structure;
 
         private:
         T *v;
-        _argv(T *v) {
-            this->v = v;
+        ull n;
+        _argv(T *v, ull n) : v {v}, n {n} {
         }
     };
     template<typename Type, typename ...Types>
     inline _argv<Type> args(const Types &...argl) {
-        return _argv<Type> {new Type [sizeof...(Types)] {argl...}};
+        return _argv<Type> {
+            new Type [sizeof...(Types)] {argl...}, 
+            sizeof...(Types)
+        };
     }
     
     CLASS_TEMPLATE class structure {
@@ -83,12 +86,16 @@ namespace ds {
         Compare compare;
 
         structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
+        structure(ull);
     };
 
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<FirstType> argv, ull n, const Hash &hash, const Compare &compare) : 
         hash {hash}, compare {compare} 
     {
         placeholder = argv.v;
+    }
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(ull n) {
+        structure();
     }
 
     template<typename Type>
