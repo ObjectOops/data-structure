@@ -3,12 +3,15 @@
 
 #include <string.h>
 
+#define dhash_t(T) ull (*) (const T &)
+#define dcomp_t(T) bool (*) (const T &, const T &)
+
 #define CLASS_TEMPLATE \
 template<\
     typename FirstType, \
     typename SecondType = int, \
-    typename Hash = ull (*) (const FirstType &), \
-    typename Compare = bool (*) (const FirstType &, const FirstType &) \
+    typename Hash = dhash_t(FirstType), \
+    typename Compare = dcomp_t(FirstType) \
 >
 
 #define FUNC_TEMPLATE \
@@ -80,22 +83,24 @@ namespace ds {
 
         private:
         FirstType *placeholder;
+        ull pl2;
         
         public:
         Hash hash;
         Compare compare;
 
         structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
-        structure(ull);
+        structure(ull, const Hash &hash = default_hash, const Compare &compare = default_compare);
     };
 
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<FirstType> argv, ull n, const Hash &hash, const Compare &compare) : 
         hash {hash}, compare {compare} 
     {
         placeholder = argv.v;
+        pl2 = n;
     }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(ull n) {
-        structure();
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(ull n, const Hash &hash, const Compare &compare) {
+        structure(args<FirstType>(), n, hash, compare);
     }
 
     template<typename Type>
