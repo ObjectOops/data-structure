@@ -2,6 +2,7 @@
 #define DATA_STRUCTURE_HPP
 
 #include <string.h>
+#include <malloc.h>
 
 #define dhash_t(T) ull (*) (const T &)
 #define dcomp_t(T) bool (*) (const T &, const T &)
@@ -48,11 +49,33 @@ namespace ds {
     inline bool default_compare(const Type &, const Type &);
 
     struct str {
-        char *p;
+        char *s;
         ull n;
         
+        inline str(const char *src, ull n) {
+            this->s = new char [n + 1];
+            this->n = n;
+            snprintf(this->s, n + 1, src);
+        }
+
+        inline str(const str &obj) {
+            str(obj.s, obj.n);
+        }
+
+        inline str(const str &&obj) {
+            str(obj.s, obj.n);
+        }
+
+        inline str() {
+            str("", 0);
+        }
+
+        inline ~str() {
+            delete[] s;
+        }
+
         inline bool operator<(const str &other) {
-            return strncmp(this->p, other.p, this->n < other.n ? this->n : other.n) < 0;
+            return strncmp(this->s, other.s, this->n < other.n ? this->n : other.n) < 0;
         }
     };
 
@@ -71,12 +94,17 @@ namespace ds {
         _argv(T *v, ull n) : v {v}, n {n} {
         }
     };
+    // The returned pointer points to a block allocated by malloc so we can realloc it if needed later.
     template<typename Type, typename ...Types>
     inline _argv<Type> args(const Types &...argl) {
-        return _argv<Type> {
-            new Type [sizeof...(Types)] {argl...}, 
-            sizeof...(Types)
-        };
+        ull typeSize {sizeof(Type)}, bufferSize {sizeof...(Types)};
+        Type *p {reinterpret_cast<Type *>(malloc(typeSize * bufferSize))};
+        Type *initBuffer {new Type [bufferSize] {argl...}};
+        for (ull i {}; i < bufferSize; ++i) {
+            p[i] = Type (initBuffer[i]);
+        }
+        delete[] initBuffer;
+        return _argv<Type> {p, bufferSize};
     }
     
     CLASS_TEMPLATE class structure {
@@ -91,6 +119,7 @@ namespace ds {
 
         structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
         structure(ull, const Hash &hash = default_hash, const Compare &compare = default_compare);
+        ~structure();
     };
 
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<FirstType> argv, ull n, const Hash &hash, const Compare &compare) : 
@@ -102,6 +131,9 @@ namespace ds {
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(ull n, const Hash &hash, const Compare &compare) {
         structure(args<FirstType>(), n, hash, compare);
     }
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::~structure() {
+        free(placeholder);
+    }
 
     template<typename Type>
     inline ull default_hash(const Type &value) {
@@ -112,12 +144,13 @@ namespace ds {
     inline ull default_hash<str>(const str &s) {
         ull len = s.n / 8 + 1;
         ull *values {new ull [len]};
-        memcpy(values, s.p, s.n);
+        memcpy(values, s.s, s.n);
         ull h {};
         for (ull i {}; i < len; ++i) {
             h *= 31;
             h += values[i];
         }
+        delete[] values;
         return h;
     }
     DEFAULT_HASH(short)
@@ -140,7 +173,7 @@ namespace ds {
     }
     template<>
     inline bool default_compare<str>(const str &lhs, const str &rhs) {
-        return strncmp(lhs.p, rhs.p, lhs.n < rhs.n ? lhs.n : rhs.n) < 0;
+        return strncmp(lhs.s, rhs.s, lhs.n < rhs.n ? lhs.n : rhs.n) < 0;
     }
     DEFAULT_COMPARE(short)
     DEFAULT_COMPARE(int)

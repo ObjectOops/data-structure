@@ -34,10 +34,8 @@ int main() {
     TEST_TYPE(char32_t)
     TEST_TYPE(bool)
 
-    ds::str s1 {new char [1000], 5};
-    ds::str s2 {new char [1000], 5};
-    sprintf(s1.p, "test1");
-    sprintf(s2.p, "test2");
+    ds::str s1 {"test1", 5};
+    ds::str s2 {"test2", 5};
 
     assert(ds::default_compare(s1, s2));
     assert(s1 < s2);

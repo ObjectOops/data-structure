@@ -43,10 +43,7 @@ int main() {
     TEST_TYPE(char32_t, 0xFFFFFF01ull)
     TEST_TYPE_2(bool, 1ull, 1ull)
 
-    ds::str s;
-    s.p = new char [1000];
-    sprintf(s.p, "test");
-    s.n = 4;
+    ds::str s {"test", 4};
     ds::structure<ds::str> test_str {};
     assert(ds::default_hash(s) == 0x74736574ull);
 
@@ -59,7 +56,7 @@ int main() {
         for (int j {}; j < c; ++j) {
             result += chars.at(rand() % len);
         }
-        ds::str s {const_cast<char *>(result.c_str()), (ds::ull)c};
+        ds::str s {result.c_str(), (ds::ull)c};
         ds::ull r1 {ds::default_hash(s)}, r2 {test_str.hash(s)};
         assert(r1 == r2);
     }
