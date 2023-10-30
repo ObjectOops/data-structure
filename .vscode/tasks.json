@@ -6,8 +6,12 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
+                "-Wall",
+                "-Wextra",
+                "-Wpedantic",
+                "-fsanitize=address",
                 "-g",
-                "-std=c++20",
+                "-std=c++11",
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"

@@ -34,8 +34,8 @@ int main() {
     TEST_TYPE(char32_t)
     TEST_TYPE(bool)
 
-    ds::str s1 {"test1", 5};
-    ds::str s2 {"test2", 5};
+    ds::str s1 {"test1"};
+    ds::str s2 {"test2"};
 
     assert(ds::default_compare(s1, s2));
     assert(s1 < s2);

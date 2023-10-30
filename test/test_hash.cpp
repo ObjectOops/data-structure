@@ -43,8 +43,9 @@ int main() {
     TEST_TYPE(char32_t, 0xFFFFFF01ull)
     TEST_TYPE_2(bool, 1ull, 1ull)
 
-    ds::str s {"test", 4};
+    ds::str s {"test"};
     ds::structure<ds::str> test_str {};
+
     assert(ds::default_hash(s) == 0x74736574ull);
 
     std::string chars {"0123456789`~-=_+[]\\{}|;\':\",./<>?qwertyuiopasdfghjklzxcvbnm"};
@@ -56,7 +57,7 @@ int main() {
         for (int j {}; j < c; ++j) {
             result += chars.at(rand() % len);
         }
-        ds::str s {result.c_str(), (ds::ull)c};
+        ds::str s {result.c_str()};
         ds::ull r1 {ds::default_hash(s)}, r2 {test_str.hash(s)};
         assert(r1 == r2);
     }

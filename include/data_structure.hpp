@@ -49,32 +49,89 @@ namespace ds {
     inline bool default_compare(const Type &, const Type &);
 
     struct str {
+
+        private:
         char *s;
         ull n;
         
-        inline str(const char *src, ull n) {
-            this->s = new char [n + 1];
-            this->n = n;
-            snprintf(this->s, n + 1, src);
+        public:
+        inline str(const char *src) {
+            this->n = strlen(src);
+            this->s = new char [this->n + 1];
+            memcpy(this->s, src, n);
+            this->s[n] = '\0';
         }
 
-        inline str(const str &obj) {
-            str(obj.s, obj.n);
+        inline str(const str &obj) : str {obj.s} {
         }
 
-        inline str(const str &&obj) {
-            str(obj.s, obj.n);
+        inline str(str &&obj) {
+            this->s = obj.s;
+            this->n = obj.n;
+            obj.s = nullptr;
+            obj.n = 0;
         }
 
-        inline str() {
-            str("", 0);
+        inline str() : str {""} {
         }
 
         inline ~str() {
             delete[] s;
         }
 
-        inline bool operator<(const str &other) {
+        inline ull length() const {
+            return n;
+        }
+
+        inline str substr(ull start, ull end) const {
+            start = start < n ? start : n;
+            end = end < n ? end : n;
+            ull len = end - start;
+            char *buffer {new char [len + 1]};
+            memcpy(buffer, s + start, len);
+            buffer[len] = '\0';
+            str ret {};
+            delete[] ret.s;
+            ret.s = buffer;
+            ret.n = strlen(buffer);
+            return ret;
+        }
+
+        inline const char *cstr() const {
+            return s;
+        }
+
+        inline char operator[](ull index) const {
+            return index >= n ? -1 : s[index];
+        }
+
+        inline str &operator=(const str &other) {
+            delete[] s;
+            s = new char [other.n + 1];
+            memcpy(s, other.s, other.n);
+            s[other.n] = '\0';
+            n = other.n;
+            return *this;
+        }
+
+        inline str operator+(const str &other) const {
+            ull len = n + other.n;
+            char *buffer {new char [len + 1]};
+            memcpy(buffer, s, n);
+            memcpy(buffer + n, other.s, other.n);
+            buffer[len] = '\0';
+            str ret {};
+            delete[] ret.s;
+            ret.s = buffer;
+            ret.n = strlen(buffer);
+            return ret;
+        }
+
+        inline str &operator+=(const str &other) {
+            return operator=(operator+(other));
+        }
+
+        inline bool operator<(const str &other) const {
             return strncmp(this->s, other.s, this->n < other.n ? this->n : other.n) < 0;
         }
     };
@@ -142,9 +199,10 @@ namespace ds {
     // Modified K&R hash function.
     template<>
     inline ull default_hash<str>(const str &s) {
-        ull len = s.n / 8 + 1;
-        ull *values {new ull [len]};
-        memcpy(values, s.s, s.n);
+        ull slen {s.length()};
+        ull len {slen / 8 + 1};
+        ull *values {new ull [len] {}};
+        memcpy(values, s.cstr(), slen);
         ull h {};
         for (ull i {}; i < len; ++i) {
             h *= 31;
@@ -173,7 +231,8 @@ namespace ds {
     }
     template<>
     inline bool default_compare<str>(const str &lhs, const str &rhs) {
-        return strncmp(lhs.s, rhs.s, lhs.n < rhs.n ? lhs.n : rhs.n) < 0;
+        ull lhs_len {lhs.length()}, rhs_len {rhs.length()};
+        return strncmp(lhs.cstr(), rhs.cstr(), lhs_len < rhs_len ? lhs_len : rhs_len) < 0;
     }
     DEFAULT_COMPARE(short)
     DEFAULT_COMPARE(int)
