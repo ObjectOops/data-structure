@@ -156,10 +156,27 @@ namespace ds {
     inline _argv<Type> args(const Types &...argl) {
         ull typeSize {sizeof(Type)}, bufferSize {sizeof...(Types)};
         Type *p {reinterpret_cast<Type *>(malloc(typeSize * bufferSize))};
+
+        // const Type **initBuffer {new const Type* [bufferSize] {&argl...}};
+
+        // Cursed things.
+        /*
+         * First, `initBuffer` is allocated with `new` to contain `Type` objects.
+         * Second, each raw byte in `initBuffer` is COPIED to `p` (allocated with `malloc`).
+         * Third, `memset` to set all bytes in `initBuffer` to 0 so delete[] has to effect
+         * on the object destructors but still deallocates `initBuffer`.
+         * 
+         * This may be subject to change as the data structure becomes more sophisticated.
+         * Maybe with the introduction of nodes.
+        */
         Type *initBuffer {new Type [bufferSize] {argl...}};
-        for (ull i {}; i < bufferSize; ++i) {
-            p[i] = Type (initBuffer[i]);
-        }
+        memcpy(
+            reinterpret_cast<void *>(p), 
+            reinterpret_cast<void *>(initBuffer), 
+            typeSize * bufferSize
+        );
+        memset(reinterpret_cast<void *>(initBuffer), 0, typeSize * bufferSize);
+
         delete[] initBuffer;
         return _argv<Type> {p, bufferSize};
     }
