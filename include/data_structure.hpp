@@ -148,6 +148,10 @@ namespace ds {
             return operator=(operator+(other));
         }
 
+        inline bool operator==(const str &other) {
+            return strncmp(s, other.s, n < other.n ? other.n : n) == 0;
+        }
+
         inline bool operator<(const str &other) const {
             return strncmp(this->s, other.s, this->n < other.n ? this->n : other.n) < 0;
         }

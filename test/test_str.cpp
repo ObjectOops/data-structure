@@ -47,5 +47,8 @@ int main() {
     assert(strcmp(test3.substr(0, 64).cstr(), "test again again") == 0);
     assert(strcmp(test3.substr(64, 64).cstr(), "") == 0);
 
+    assert(test3 == ds::str {"test again again"});
+    assert(!(test3 == ds::str {"not equals"}));
+
     return 0;
 }
