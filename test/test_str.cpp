@@ -27,8 +27,21 @@ int main() {
 
     assert(test3[0] == 't');
     assert(test3[test3.length() - 1] == 'n');
-    assert(test3[-1] == -1);
-    assert(test3[test3.length()] == -1);
+    // assert(test3[-1] == -1);
+    // assert(test3[test3.length()] == -1);
+    try {
+        test3[-1];
+    } catch (ds::exception::out_of_bounds &e) {
+        assert(strncmp(e.what(), "ds::str subscript out of bounds exception with index", 52) == 0);
+    }
+    try {
+        test3[test3.length()];
+    } catch (ds::exception::out_of_bounds &e) {
+        assert(strcmp(e.what(), "ds::str subscript out of bounds exception with index 16.") == 0);
+    }
+    test3[0] = 'w';
+    assert(strcmp(test3.cstr(), "west again again") == 0);
+    test3[0] = 't';
 
     assert(strcmp(test3.substr(0, 4).cstr(), "test") == 0);
     assert(strcmp(test3.substr(0, 64).cstr(), "test again again") == 0);

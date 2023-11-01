@@ -39,14 +39,26 @@ namespace ds {
 
     typedef unsigned long long ull;
 
-    // The class templates require the default hash and comparison functions 
-    // to take all parameters by reference, including primitive types.
+    // `ds::exception` is for internal use only.
+    // Exception constructors expect memory allocated with `new`.
+    // Destructors are solely responsible for deallocation.
+    namespace exception {
+        struct out_of_bounds {
 
-    template<typename Type>
-    inline ull default_hash(const Type &);
+            private:
+            const char *msg;
 
-    template<typename Type>
-    inline bool default_compare(const Type &, const Type &);
+            public:
+            inline out_of_bounds(const char *msg) : msg {msg} {
+            }
+            inline ~out_of_bounds() {
+                delete[] msg;
+            }
+            inline const char *what() {
+                return msg;
+            }
+        };
+    }
 
     struct str {
 
@@ -101,8 +113,13 @@ namespace ds {
             return s;
         }
 
-        inline char operator[](ull index) const {
-            return index >= n ? -1 : s[index];
+        inline char &operator[](ull index) const {
+            if (index >= n) {
+                char *msg {new char [128]};
+                snprintf(msg, 128, "ds::str subscript out of bounds exception with index %llu.", n);
+                throw exception::out_of_bounds {msg};
+            }
+            return s[index];
         }
 
         inline str &operator=(const str &other) {
@@ -136,6 +153,15 @@ namespace ds {
         }
     };
 
+    // The class templates require the default hash and comparison functions 
+    // to take all parameters by reference, including primitive types.
+
+    template<typename Type>
+    inline ull default_hash(const Type &);
+
+    template<typename Type>
+    inline bool default_compare(const Type &, const Type &);
+
     template<typename T>
     struct _argv {
 
@@ -155,6 +181,8 @@ namespace ds {
     template<typename Type, typename ...Types>
     inline _argv<Type> args(const Types &...argl) {
         ull typeSize {sizeof(Type)}, bufferSize {sizeof...(Types)};
+
+        // Note: verify `malloc` doesn't return `NULL`.
         Type *p {reinterpret_cast<Type *>(malloc(typeSize * bufferSize))};
 
         // const Type **initBuffer {new const Type* [bufferSize] {&argl...}};
