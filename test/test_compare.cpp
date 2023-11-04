@@ -38,9 +38,7 @@ int main() {
     ds::str s2 {"test2"};
 
     assert(ds::default_compare(s1, s2));
-    assert(s1 < s2);
     assert(!(ds::default_compare(s2, s1)));
-    assert(!(s2 < s1));
 
     return 0;
 }

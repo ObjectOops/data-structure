@@ -151,10 +151,6 @@ namespace ds {
         inline bool operator==(const str &other) {
             return strncmp(s, other.s, n < other.n ? other.n : n) == 0;
         }
-
-        inline bool operator<(const str &other) const {
-            return strncmp(this->s, other.s, this->n < other.n ? this->n : other.n) < 0;
-        }
     };
 
     // The class templates require the default hash and comparison functions 
@@ -281,7 +277,9 @@ namespace ds {
     template<>
     inline bool default_compare<str>(const str &lhs, const str &rhs) {
         ull lhs_len {lhs.length()}, rhs_len {rhs.length()};
-        return strncmp(lhs.cstr(), rhs.cstr(), lhs_len < rhs_len ? lhs_len : rhs_len) < 0;
+        // Assume that the null terminator will be present under normal circumstances, 
+        // but mitigate the risk of buffer overflow.
+        return strncmp(lhs.cstr(), rhs.cstr(), lhs_len < rhs_len ? rhs_len : lhs_len) < 0;
     }
     DEFAULT_COMPARE(short)
     DEFAULT_COMPARE(int)
