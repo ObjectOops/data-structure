@@ -153,6 +153,17 @@ namespace ds {
         }
     };
 
+    template<typename Type>
+    struct node {
+        
+        FUNC_TEMPLATE
+        friend class structure;
+
+        private:
+        Type *p = nullptr;
+        node *left = nullptr, *right = nullptr;
+    };
+
     // The class templates require the default hash and comparison functions 
     // to take all parameters by reference, including primitive types.
 
@@ -172,48 +183,33 @@ namespace ds {
         friend class structure;
 
         private:
-        T *v;
+        const T **v;
         ull n;
-        _argv(T *v, ull n) : v {v}, n {n} {
+        _argv(const T **v, ull n) : v {v}, n {n} {
+        }
+
+        public:
+        ~_argv() {
+            delete[] v;
         }
     };
     // The returned pointer points to a block allocated by malloc so we can realloc it if needed later.
     template<typename Type, typename ...Types>
     inline _argv<Type> args(const Types &...argl) {
-        ull typeSize {sizeof(Type)}, bufferSize {sizeof...(Types)};
+        ull bufferSize {sizeof...(Types)};
 
-        // Note: verify `malloc` doesn't return `NULL`.
-        Type *p {reinterpret_cast<Type *>(malloc(typeSize * bufferSize))};
+        // Type *initBuffer {new Type [bufferSize] {argl...}};
 
-        // const Type **initBuffer {new const Type* [bufferSize] {&argl...}};
-
-        // Cursed things.
-        /*
-         * First, `initBuffer` is allocated with `new` to contain `Type` objects.
-         * Second, each raw byte in `initBuffer` is COPIED to `p` (allocated with `malloc`).
-         * Third, `memset` to set all bytes in `initBuffer` to 0 so delete[] has to effect
-         * on the object destructors but still deallocates `initBuffer`.
-         * 
-         * This may be subject to change as the data structure becomes more sophisticated.
-         * Maybe with the introduction of nodes.
-        */
-        Type *initBuffer {new Type [bufferSize] {argl...}};
-        memcpy(
-            reinterpret_cast<void *>(p), 
-            reinterpret_cast<void *>(initBuffer), 
-            typeSize * bufferSize
-        );
-        memset(reinterpret_cast<void *>(initBuffer), 0, typeSize * bufferSize);
-
-        delete[] initBuffer;
-        return _argv<Type> {p, bufferSize};
+        const Type **initBuffer {new const Type* [bufferSize] {&argl...}};
+        
+        return _argv<Type> {initBuffer, bufferSize};
     }
     
     CLASS_TEMPLATE class structure {
 
         private:
-        FirstType *placeholder;
-        ull pl2;
+        node<FirstType> *baseHead = nullptr, *baseTail = nullptr;
+        ull size = 0;
         
         public:
         Hash hash;
@@ -227,14 +223,34 @@ namespace ds {
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<FirstType> argv, ull n, const Hash &hash, const Compare &compare) : 
         hash {hash}, compare {compare} 
     {
-        placeholder = argv.v;
-        pl2 = n;
+        ull i {};
+        if (argv.n > 0 && baseHead == nullptr) {
+            baseHead = new node<FirstType> {};
+            baseHead->p = new FirstType {*argv.v[0]};
+            baseTail = baseHead;
+            ++i;
+        }
+        for (; i < argv.n; ++i) {
+            node<FirstType> *rightNode = new node<FirstType> {};
+            rightNode->p = new FirstType {*argv.v[i]};
+            rightNode->left = baseTail;
+            baseTail->right = rightNode;
+            baseTail = rightNode;
+        }
+        for (; i < n; ++i) {
+            node<FirstType> *rightNode = new node<FirstType> {};
+            rightNode->p = new FirstType {};
+            rightNode->left = baseTail;
+            baseTail->right = rightNode;
+            baseTail = rightNode;
+        }
+
+        size = argv.n;
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(ull n, const Hash &hash, const Compare &compare) {
         structure(args<FirstType>(), n, hash, compare);
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::~structure() {
-        free(placeholder);
     }
 
     template<typename Type>
