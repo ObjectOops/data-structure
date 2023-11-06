@@ -60,6 +60,17 @@ namespace ds {
         };
     }
 
+    namespace util {
+        template<typename Type, typename OtherType>
+        struct same_type {
+            static constexpr bool result = false;
+        };
+        template<typename Type>
+        struct same_type<Type, Type> {
+            static constexpr bool result = true;
+        };
+    }
+
     struct str {
 
         private:
@@ -193,7 +204,6 @@ namespace ds {
             delete[] v;
         }
     };
-    // The returned pointer points to a block allocated by malloc so we can realloc it if needed later.
     template<typename Type, typename ...Types>
     inline _argv<Type> args(const Types &...argl) {
         ull bufferSize {sizeof...(Types)};
@@ -208,7 +218,8 @@ namespace ds {
     CLASS_TEMPLATE class structure {
 
         private:
-        _node<FirstType> *baseHead = nullptr, *baseTail = nullptr;
+        _node<FirstType> *ft_baseHead = nullptr, *ft_baseTail = nullptr;
+        _node<SecondType> *st_baseHead = nullptr, *st_baseTail = nullptr;
         ull size = 0;
         
         public:
@@ -224,25 +235,25 @@ namespace ds {
         hash {hash}, compare {compare} 
     {
         ull i {};
-        if (argv.n > 0 && baseHead == nullptr) {
-            baseHead = new _node<FirstType> {};
-            baseHead->p = new FirstType {*argv.v[0]};
-            baseTail = baseHead;
+        if (argv.n > 0 && ft_baseHead == nullptr) {
+            ft_baseHead = new _node<FirstType> {};
+            ft_baseHead->p = new FirstType {*argv.v[0]};
+            ft_baseTail = ft_baseHead;
             ++i;
         }
         for (; i < argv.n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {*argv.v[i]};
-            rightNode->left = baseTail;
-            baseTail->right = rightNode;
-            baseTail = rightNode;
+            rightNode->left = ft_baseTail;
+            ft_baseTail->right = rightNode;
+            ft_baseTail = rightNode;
         }
         for (; i < n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {};
-            rightNode->left = baseTail;
-            baseTail->right = rightNode;
-            baseTail = rightNode;
+            rightNode->left = ft_baseTail;
+            ft_baseTail->right = rightNode;
+            ft_baseTail = rightNode;
         }
 
         size = argv.n;
@@ -251,8 +262,8 @@ namespace ds {
         structure(args<FirstType>(), n, hash, compare);
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::~structure() {
-        _node<FirstType> *dnode {baseHead};
-        while (dnode != baseTail) {
+        _node<FirstType> *dnode {ft_baseHead};
+        while (dnode != ft_baseTail) {
             delete dnode->p;
             _node<FirstType> *tnode {dnode};
             dnode = dnode->right;
