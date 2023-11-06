@@ -154,14 +154,14 @@ namespace ds {
     };
 
     template<typename Type>
-    struct node {
+    struct _node {
         
         FUNC_TEMPLATE
         friend class structure;
 
         private:
         Type *p = nullptr;
-        node *left = nullptr, *right = nullptr;
+        _node *left = nullptr, *right = nullptr;
     };
 
     // The class templates require the default hash and comparison functions 
@@ -208,7 +208,7 @@ namespace ds {
     CLASS_TEMPLATE class structure {
 
         private:
-        node<FirstType> *baseHead = nullptr, *baseTail = nullptr;
+        _node<FirstType> *baseHead = nullptr, *baseTail = nullptr;
         ull size = 0;
         
         public:
@@ -225,20 +225,20 @@ namespace ds {
     {
         ull i {};
         if (argv.n > 0 && baseHead == nullptr) {
-            baseHead = new node<FirstType> {};
+            baseHead = new _node<FirstType> {};
             baseHead->p = new FirstType {*argv.v[0]};
             baseTail = baseHead;
             ++i;
         }
         for (; i < argv.n; ++i) {
-            node<FirstType> *rightNode = new node<FirstType> {};
+            _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {*argv.v[i]};
             rightNode->left = baseTail;
             baseTail->right = rightNode;
             baseTail = rightNode;
         }
         for (; i < n; ++i) {
-            node<FirstType> *rightNode = new node<FirstType> {};
+            _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {};
             rightNode->left = baseTail;
             baseTail->right = rightNode;
@@ -251,6 +251,13 @@ namespace ds {
         structure(args<FirstType>(), n, hash, compare);
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::~structure() {
+        _node<FirstType> *dnode {baseHead};
+        while (dnode != baseTail) {
+            delete dnode->p;
+            _node<FirstType> *tnode {dnode};
+            dnode = dnode->right;
+            delete tnode;
+        }
     }
 
     template<typename Type>
