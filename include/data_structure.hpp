@@ -173,6 +173,7 @@ namespace ds {
         private:
         Type *p = nullptr;
         _node *left = nullptr, *right = nullptr;
+        _node *partner = nullptr;
     };
 
     // The class templates require the default hash and comparison functions 
@@ -214,6 +215,16 @@ namespace ds {
         
         return _argv<Type> {initBuffer, bufferSize};
     }
+
+    // template<typename FirstType, typename SecondType>
+    // struct _pair {
+    //     const FirstType *first;
+    //     const SecondType *second;
+    //     _pair(const FirstType &first, const SecondType &second) : 
+    //         first {&first}, second {&second} 
+    //     {
+    //     }
+    // };
     
     CLASS_TEMPLATE class structure {
 
@@ -227,6 +238,7 @@ namespace ds {
         Compare compare;
 
         structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
+        // structure(_argv<_pair<FirstType, SecondType>>, ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
         structure(ull, const Hash &hash = default_hash, const Compare &compare = default_compare);
         ~structure();
     };
@@ -258,6 +270,11 @@ namespace ds {
 
         size = argv.n;
     }
+    // FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<_pair<FirstType, SecondType>> argv, ull n, const Hash &hash, const Compare &compare) : 
+    //     hash {hash}, compare {compare} 
+    // {
+    //     FirstType *firstValues {new FirstType}
+    // }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(ull n, const Hash &hash, const Compare &compare) {
         structure(args<FirstType>(), n, hash, compare);
     }
