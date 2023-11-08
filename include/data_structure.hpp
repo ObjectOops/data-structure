@@ -164,18 +164,6 @@ namespace ds {
         }
     };
 
-    template<typename Type, typename PartnerType>
-    struct _node {
-        
-        FUNC_TEMPLATE
-        friend class structure;
-
-        private:
-        Type *p = nullptr;
-        _node<Type, PartnerType> *left = nullptr, *right = nullptr;
-        _node<PartnerType, Type> *partner = nullptr;
-    };
-
     // The class templates require the default hash and comparison functions 
     // to take all parameters by reference, including primitive types.
 
@@ -185,11 +173,18 @@ namespace ds {
     template<typename Type>
     inline bool default_compare(const Type &, const Type &);
 
-    template<typename FirstType, typename SecondType>
+    template<typename T1, typename T2>
     struct ipair {
-        const FirstType *first;
-        const SecondType *second;
-        ipair(const FirstType &first, const SecondType &second) : 
+
+        FUNC_TEMPLATE
+        friend class structure;
+
+        private:
+        const T1 *first;
+        const T2 *second;
+
+        public:
+        ipair(const T1 &first, const T2 &second) : 
             first {&first}, second {&second} 
         {
         }
@@ -236,6 +231,18 @@ namespace ds {
         }
         return _argv<ipair<FirstType, SecondType>> {initBuffer, size};
     }
+
+    template<typename Type, typename PartnerType>
+    struct _node {
+        
+        FUNC_TEMPLATE
+        friend class structure;
+
+        private:
+        Type *p = nullptr;
+        _node<Type, PartnerType> *left = nullptr, *right = nullptr;
+        _node<PartnerType, Type> *partner = nullptr;
+    };
     
     CLASS_TEMPLATE class structure {
 
