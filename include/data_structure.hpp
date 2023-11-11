@@ -232,7 +232,7 @@ namespace ds {
         return _argv<ipair<FirstType, SecondType>> {initBuffer, size};
     }
 
-    template<typename Type, typename PartnerType>
+    template<typename Type>
     struct _node {
         
         FUNC_TEMPLATE
@@ -240,18 +240,23 @@ namespace ds {
 
         private:
         Type *p = nullptr;
-        _node<Type, PartnerType> *left = nullptr, *right = nullptr;
-        _node<PartnerType, Type> *partner = nullptr;
+        _node<Type> *left = nullptr, *right = nullptr;
     };
     
     CLASS_TEMPLATE class structure {
 
         private:
-        _node<FirstType, SecondType> *ft_baseHead = nullptr, *ft_baseTail = nullptr;
-        _node<SecondType, FirstType> *st_baseHead = nullptr, *st_baseTail = nullptr;
+        _node<FirstType> *ft_baseHead = nullptr, *ft_baseTail = nullptr;
+        _node<SecondType> *st_baseHead = nullptr, *st_baseTail = nullptr;
         ull size = 0;
+
+        SecondType *util_initSecondType(bool forceInit) {
+            return forceInit ? new SecondType {} : nullptr;
+        }
         
         public:
+        static bool forceSecondTypeInit;
+
         Hash hash;
         Compare compare;
 
@@ -261,55 +266,48 @@ namespace ds {
         ~structure();
     };
 
+    FUNC_TEMPLATE bool structure<FirstType, SecondType, Hash, Compare>::forceSecondTypeInit = false;
+
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<FirstType> argv, ull n, const Hash &hash, const Compare &compare) : 
         hash {hash}, compare {compare} 
     {
         ull i {};
         if (argv.n > 0 && ft_baseHead == nullptr) {
-            ft_baseHead = new _node<FirstType, SecondType> {};
+            ft_baseHead = new _node<FirstType> {};
             ft_baseHead->p = new FirstType {*argv.v[0]};
             ft_baseTail = ft_baseHead;
 
-            st_baseHead = new _node<SecondType, FirstType> {};
-            st_baseHead->p = new SecondType {};
+            st_baseHead = new _node<SecondType> {};
+            st_baseHead->p = util_initSecondType(forceSecondTypeInit);
             st_baseTail = st_baseHead;
-
-            ft_baseHead->partner = st_baseHead;
-            st_baseHead->partner = ft_baseHead;
 
             ++i;
         }
         for (; i < argv.n; ++i) {
-            _node<FirstType, SecondType> *rightNode {new _node<FirstType, SecondType> {}};
+            _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {*argv.v[i]};
             rightNode->left = ft_baseTail;
             ft_baseTail->right = rightNode;
             ft_baseTail = rightNode;
 
-            _node<SecondType, FirstType> *rightNodeSecond {new _node<SecondType, FirstType> {}};
-            rightNodeSecond->p = new SecondType {};
+            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
+            rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             rightNodeSecond->left = st_baseTail;
             st_baseTail->right = rightNodeSecond;
             st_baseTail = rightNodeSecond;
-
-            ft_baseTail->partner = st_baseTail;
-            st_baseTail->partner = ft_baseTail;
         }
         for (; i < n; ++i) {
-            _node<FirstType, SecondType> *rightNode {new _node<FirstType, SecondType> {}};
+            _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {};
             rightNode->left = ft_baseTail;
             ft_baseTail->right = rightNode;
             ft_baseTail = rightNode;
 
-            _node<SecondType, FirstType> *rightNodeSecond {new _node<SecondType, FirstType> {}};
-            rightNodeSecond->p = new SecondType {};
+            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
+            rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             rightNodeSecond->left = st_baseTail;
             st_baseTail->right = rightNodeSecond;
             st_baseTail = rightNodeSecond;
-
-            ft_baseTail->partner = st_baseTail;
-            st_baseTail->partner = ft_baseTail;
         }
 
         size = argv.n;
@@ -319,50 +317,41 @@ namespace ds {
     {
         ull i {};
         if (argv.n > 0 && ft_baseHead == nullptr) {
-            ft_baseHead = new _node<FirstType, SecondType> {};
+            ft_baseHead = new _node<FirstType> {};
             ft_baseHead->p = new FirstType {*argv.v[0]->first};
             ft_baseTail = ft_baseHead;
 
-            st_baseHead = new _node<SecondType, FirstType> {};
+            st_baseHead = new _node<SecondType> {};
             st_baseHead->p = new SecondType {*argv.v[0]->second};
             st_baseTail = st_baseHead;
-
-            ft_baseHead->partner = st_baseHead;
-            st_baseHead->partner = ft_baseHead;
 
             ++i;
         }
         for (; i < argv.n; ++i) {
-            _node<FirstType, SecondType> *rightNode {new _node<FirstType, SecondType> {}};
+            _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {*argv.v[i]->first};
             rightNode->left = ft_baseTail;
             ft_baseTail->right = rightNode;
             ft_baseTail = rightNode;
 
-            _node<SecondType, FirstType> *rightNodeSecond {new _node<SecondType, FirstType> {}};
+            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
             rightNodeSecond->p = new SecondType {*argv.v[i]->second};
             rightNodeSecond->left = st_baseTail;
             st_baseTail->right = rightNodeSecond;
             st_baseTail = rightNodeSecond;
-
-            ft_baseTail->partner = st_baseTail;
-            st_baseTail->partner = ft_baseTail;
         }
         for (; i < n; ++i) {
-            _node<FirstType, SecondType> *rightNode {new _node<FirstType, SecondType> {}};
+            _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {};
             rightNode->left = ft_baseTail;
             ft_baseTail->right = rightNode;
             ft_baseTail = rightNode;
 
-            _node<SecondType, FirstType> *rightNodeSecond {new _node<SecondType, FirstType> {}};
-            rightNodeSecond->p = new SecondType {};
+            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
+            rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             rightNodeSecond->left = st_baseTail;
             st_baseTail->right = rightNodeSecond;
             st_baseTail = rightNodeSecond;
-
-            ft_baseTail->partner = st_baseTail;
-            st_baseTail->partner = ft_baseTail;
         }
 
         size = argv.n;
@@ -371,18 +360,18 @@ namespace ds {
         structure(args<FirstType>(), n, hash, compare);
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::~structure() {
-        _node<FirstType, SecondType> *ft_dnode {ft_baseHead};
+        _node<FirstType> *ft_dnode {ft_baseHead};
         while (ft_dnode != ft_baseTail) {
             delete ft_dnode->p;
-            _node<FirstType, SecondType> *tnode {ft_dnode};
+            _node<FirstType> *tnode {ft_dnode};
             ft_dnode = ft_dnode->right;
             delete tnode;
         }
 
-        _node<SecondType, FirstType> *st_dnode {st_baseHead};
+        _node<SecondType> *st_dnode {st_baseHead};
         while (st_dnode != st_baseTail) {
             delete st_dnode->p;
-            _node<SecondType, FirstType> *tnode {st_dnode};
+            _node<SecondType> *tnode {st_dnode};
             st_dnode = st_dnode->right;
             delete tnode;
         }
