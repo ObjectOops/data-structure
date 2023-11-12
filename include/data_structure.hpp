@@ -250,7 +250,13 @@ namespace ds {
         _node<SecondType> *st_baseHead = nullptr, *st_baseTail = nullptr;
         ull size = 0;
 
-        SecondType *util_initSecondType(bool forceInit) {
+        template<typename _nodeType>
+        inline void util_link(_nodeType tail, _nodeType newNode) {
+            newNode->left = tail;
+            tail->right = newNode;
+            tail = newNode;
+        }
+        inline SecondType *util_initSecondType(bool forceInit) {
             return forceInit ? new SecondType {} : nullptr;
         }
         
@@ -286,28 +292,20 @@ namespace ds {
         for (; i < argv.n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {*argv.v[i]};
-            rightNode->left = ft_baseTail;
-            ft_baseTail->right = rightNode;
-            ft_baseTail = rightNode;
+            util_link(ft_baseTail, rightNode);
 
             _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
-            rightNodeSecond->left = st_baseTail;
-            st_baseTail->right = rightNodeSecond;
-            st_baseTail = rightNodeSecond;
+            util_link(st_baseTail, rightNodeSecond);
         }
         for (; i < n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {};
-            rightNode->left = ft_baseTail;
-            ft_baseTail->right = rightNode;
-            ft_baseTail = rightNode;
+            util_link(ft_baseTail, rightNode);
 
             _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
-            rightNodeSecond->left = st_baseTail;
-            st_baseTail->right = rightNodeSecond;
-            st_baseTail = rightNodeSecond;
+            util_link(st_baseTail, rightNodeSecond);
         }
 
         size = argv.n;
@@ -330,28 +328,20 @@ namespace ds {
         for (; i < argv.n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {*argv.v[i]->first};
-            rightNode->left = ft_baseTail;
-            ft_baseTail->right = rightNode;
-            ft_baseTail = rightNode;
+            util_link(ft_baseTail, rightNode);
 
             _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
             rightNodeSecond->p = new SecondType {*argv.v[i]->second};
-            rightNodeSecond->left = st_baseTail;
-            st_baseTail->right = rightNodeSecond;
-            st_baseTail = rightNodeSecond;
+            util_link(st_baseTail, rightNodeSecond);
         }
         for (; i < n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
             rightNode->p = new FirstType {};
-            rightNode->left = ft_baseTail;
-            ft_baseTail->right = rightNode;
-            ft_baseTail = rightNode;
+            util_link(ft_baseTail, rightNode);
 
             _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
-            rightNodeSecond->left = st_baseTail;
-            st_baseTail->right = rightNodeSecond;
-            st_baseTail = rightNodeSecond;
+            util_link(st_baseTail, rightNodeSecond);
         }
 
         size = argv.n;
