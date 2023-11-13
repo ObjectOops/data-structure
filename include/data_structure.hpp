@@ -240,15 +240,66 @@ namespace ds {
 
         private:
         Type *p = nullptr;
-        _node<Type> *left = nullptr, *right = nullptr;
+        _node<Type> *left {nullptr}, *right {nullptr};
     };
+
+    /*
+     * Pseudo Plan
+     * 
+     * Need:
+     * - Vector / Array y
+     * - Deque y
+     * - Linked List y
+     * - Circular Linked List
+     * - Set by Order y
+     * - Multiset by Order y
+     * - Map by Order y
+     * - Multimap by Order y
+     *      - Sets, maps, multisets, multimaps by hashing. y
+     * - Stack y
+     * - Queue y
+     * - Priority Queue y
+     * 
+     * ipair<int, int> arguments [] {{1, 2}, {2, 3}, {3, 4}};
+     * structure<int, int> test {args(arguments)};
+     * 
+     * test.random() --> Retrieves a pseudo-random pair. We don't need this...
+     * 
+     * test.pair[0] --> {1, 2} // Retrieves pair / iterator of FirstType and SecondType.
+     * test.pair[1] --> {2, 3}
+     * test.pair[2] --> {3, 4}
+     * 
+     * test.first[0] --> 1 // Retrieves FirstType.
+     * test.first[1] --> 2
+     * test.first[2] --> 3
+     * 
+     * test.second[0] --> 2 // Retrieves SecondType.
+     * test.second[1] --> 3
+     * test.second[2] --> 4
+     * 
+     * // The following really only operate on on FirstType.
+     * 
+     * test.ordered // Ordered map / set operations.
+     * test.hashed // Hashed map / set operations.
+     * 
+     * test.deque // Deque operations.
+     * test.stack // Stack operations.
+     * test.queue // Queue operations.
+     * test.pq // Priority queue operations.
+     * 
+     * structure<int, int>::pair // Pair which also doubles an an iterator?
+     * 
+     * To Do:
+     * - Maybe also move _node into class structure since it's used internally...
+     * - Need to complete pair initialization since everything else is based on it.
+     */
     
     CLASS_TEMPLATE class structure {
 
         private:
-        _node<FirstType> *ft_baseHead = nullptr, *ft_baseTail = nullptr;
-        _node<SecondType> *st_baseHead = nullptr, *st_baseTail = nullptr;
-        ull size = 0;
+        _node<FirstType> *ft_baseHead {nullptr}, *ft_baseTail {nullptr};
+        _node<SecondType> *st_baseHead {nullptr}, *st_baseTail {nullptr};
+        ull size {};
 
         template<typename _nodeType>
         inline void util_link(_nodeType tail, _nodeType newNode) {
@@ -259,6 +310,11 @@ namespace ds {
         inline SecondType *util_initSecondType(bool forceInit) {
             return forceInit ? new SecondType {} : nullptr;
         }
+
+        struct array_secondary {
+            structure<FirstType, SecondType, Hash, Compare> *primary;
+        };
+        array_secondary array {this};
         
         public:
         static bool forceSecondTypeInit;
