@@ -238,6 +238,9 @@ namespace ds {
         FUNC_TEMPLATE
         friend class structure;
 
+        template<typename Type1, typename Type2>
+        friend class pair;
+
         private:
         Type *p = nullptr;
         _node<Type> *left {nullptr}, *right {nullptr};
@@ -303,9 +306,29 @@ namespace ds {
 
         private:
         pair<Type1, Type2> *left, *right;
+        _node<Type1> *t1, *t2;
+        Type1 *v1;
+        Type2 *v2;
 
         public:
+        pair(const Type1 &first, const Type2 &second) : v1 {new Type1 {first}}, v2 {new Type2 {second}} {
+        }
+        ~pair() {
+            delete v1;
+            delete v2;
+        }
 
+        const Type1 &getFirst() {
+            return *v1;
+        }
+        const Type2 &getSecond() {
+            return *v2;
+        }
+        
+        // pair<Type1, Type2> &operator++() {
+        // }
+        // pair<Type1, Type2> &operator++(int) {
+        // }
     };
     
     CLASS_TEMPLATE class structure {
