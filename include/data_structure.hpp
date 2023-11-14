@@ -232,6 +232,17 @@ namespace ds {
         return _argv<ipair<FirstType, SecondType>> {initBuffer, size};
     }
 
+    template<typename Type>
+    struct _node {
+        
+        FUNC_TEMPLATE
+        friend class structure;
+
+        private:
+        Type *p = nullptr;
+        _node<Type> *left {nullptr}, *right {nullptr};
+    };
+
     /*
      * Pseudo Plan
      * 
@@ -280,6 +291,7 @@ namespace ds {
      * ds::pair<int, int> // Pair which also doubles an an iterator?
      * 
      * To Do:
+     * - Maybe also move _node into class structure since it's used internally...
      * - Need to complete pair initialization since everything else is based on it.
      */
 
@@ -301,16 +313,6 @@ namespace ds {
         friend class pair<FirstType, SecondType>;
 
         private:
-        template<typename Type>
-        struct _node {
-            
-            friend class structure;
-
-            private:
-            Type *p {nullptr};
-            _node<Type> *left {nullptr}, *right {nullptr};
-        };
-
         _node<FirstType> *ft_baseHead {nullptr}, *ft_baseTail {nullptr};
         _node<SecondType> *st_baseHead {nullptr}, *st_baseTail {nullptr};
         ull size {};
