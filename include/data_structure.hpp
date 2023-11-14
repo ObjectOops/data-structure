@@ -253,6 +253,7 @@ namespace ds {
      * structure<int, int> test {args(arguments)};
      * 
      * test.random() --> Retrieves a pseudo-random pair. We don't need this...
+     * test.foreach(lambda) --> For each loop.
      * 
      * test.pair[0] --> {1, 2} // Retrieves pair / iterator of FirstType and SecondType.
      * test.pair[1] --> {2, 3}
@@ -276,13 +277,28 @@ namespace ds {
      * test.queue // Queue operations.
      * test.pq // Priority queue operations.
      * 
-     * structure<int, int>::pair // Pair which also doubles an an iterator?
+     * ds::pair<int, int> // Pair which also doubles an an iterator?
      * 
      * To Do:
      * - Need to complete pair initialization since everything else is based on it.
      */
+
+    template<typename Type1, typename Type2>
+    class pair {
+
+        FUNC_TEMPLATE
+        friend class structure;
+
+        private:
+        pair<Type1, Type2> *left, *right;
+
+        public:
+
+    };
     
     CLASS_TEMPLATE class structure {
+
+        friend class pair<FirstType, SecondType>;
 
         private:
         template<typename Type>
