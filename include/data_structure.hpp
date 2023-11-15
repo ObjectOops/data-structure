@@ -39,23 +39,35 @@ namespace ds {
 
     typedef unsigned long long ull;
 
-    // `ds::exception` is for internal use only.
-    // Exception constructors expect memory allocated with `new`.
-    // Destructors are solely responsible for deallocation.
+    // `ds::exception` is for internal use only!
     namespace exception {
-        struct out_of_bounds {
 
-            private:
-            const char *msg;
+        struct base {
+
+            protected:
+            char *msg;
 
             public:
-            inline out_of_bounds(const char *msg) : msg {msg} {
+            inline base(const char *msg, ull size, const char *default_msg = "ds base unamed exception", ull default_size = 0xFFF) {
+                ull n {size + default_size};
+                this->msg = new char [n];
+                snprintf(this->msg, n, "%s: %s", default_msg, msg);
+
+                delete[] msg;
+                msg = nullptr;
             }
-            inline ~out_of_bounds() {
+            inline ~base() {
                 delete[] msg;
             }
             inline const char *what() {
                 return msg;
+            }
+        };
+
+        struct out_of_bounds : public base {
+
+            public:
+            inline out_of_bounds(const char *msg, ull size) : base {msg, size, "ds out-of-bounds exception", 32} {
             }
         };
     }
@@ -124,11 +136,12 @@ namespace ds {
             return s;
         }
 
-        inline char &operator[](ull index) const {
+        inline char &operator[](ull index) {
             if (index >= n) {
-                char *msg {new char [128]};
-                snprintf(msg, 128, "ds::str subscript out of bounds exception with index %llu.", n);
-                throw exception::out_of_bounds {msg};
+                ull size {128};
+                char *msg {new char [size]};
+                snprintf(msg, size, "ds::str string access at index %llu with length %llu.", index, n);
+                throw exception::out_of_bounds {msg, size};
             }
             return s[index];
         }
@@ -242,7 +255,7 @@ namespace ds {
         friend class pair;
 
         private:
-        Type *p = nullptr;
+        Type *p {nullptr};
         _node<Type> *left {nullptr}, *right {nullptr};
     };
 
@@ -294,8 +307,12 @@ namespace ds {
      * ds::pair<int, int> // Pair which also doubles an an iterator?
      * 
      * To Do:
-     * - Maybe also move _node into class structure since it's used internally...
+     * - Exceptions for pair-iterator.
+     * - Tests for pair-iterator.
      * - Need to complete pair initialization since everything else is based on it.
+     * - Add noexcept and const later.
+     * - Explicitly inline some functions?
+     * - May need some kind of state class to manage weird pair-structure interactions.
      */
 
     template<typename Type1, typename Type2>
@@ -306,16 +323,32 @@ namespace ds {
 
         private:
         pair<Type1, Type2> *left, *right;
-        _node<Type1> *t1, *t2;
+        _node<Type1> *n1, *n2;
         Type1 *v1;
         Type2 *v2;
+
+        bool ref;
+
+        inline void copy(pair<Type1, Type2> &other) {
+            this.left = other.left;
+            this.right = other.right;
+            this.n1 = other.n1;
+            this.n2 = other.n2;
+            this.v1 = other.v1;
+            this.v2 = other.v2;
+        }
 
         public:
         pair(const Type1 &first, const Type2 &second) : v1 {new Type1 {first}}, v2 {new Type2 {second}} {
         }
+        pair(const pair<Type1, Type2> &other) : ref {true} {
+            copy(other);
+        }
         ~pair() {
-            delete v1;
-            delete v2;
+            if (!ref) {
+                delete v1;
+                delete v2;
+            }
         }
 
         const Type1 &getFirst() {
@@ -325,10 +358,24 @@ namespace ds {
             return *v2;
         }
         
-        // pair<Type1, Type2> &operator++() {
-        // }
-        // pair<Type1, Type2> &operator++(int) {
-        // }
+        pair<Type1, Type2> &operator++() { // Pre-increment
+            copy(right);
+            return *this;
+        }
+        pair<Type1, Type2> &operator++(int) { // Post-increment
+            pair<Type1, Type2> &temp {*this};
+            copy(right);
+            return temp;
+        }
+        pair<Type1, Type2> &operator--() { // Pre-decrement
+            copy(left);
+            return *this;
+        }
+        pair<Type1, Type2> &operator--(int) { // Post-decrement
+            pair<Type1, Type2> &temp {*this};
+            copy(left);
+            return temp;
+        }
     };
     
     CLASS_TEMPLATE class structure {

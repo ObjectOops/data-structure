@@ -4,6 +4,9 @@
         "iostream": "cpp",
         "initializer_list": "cpp",
         "type_traits": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "array": "cpp",
+        "ranges": "cpp",
+        "utility": "cpp"
     }
 }
