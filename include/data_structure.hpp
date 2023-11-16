@@ -48,13 +48,21 @@ namespace ds {
             char *msg;
 
             public:
-            inline base(const char *msg, ull size, const char *default_msg = "ds base unamed exception", ull default_size = 0xFFF) {
-                ull n {size + default_size};
-                this->msg = new char [n];
-                snprintf(this->msg, n, "%s: %s", default_msg, msg);
-
-                delete[] msg;
-                msg = nullptr;
+            inline base(
+                const char *exceptionName = "ds::base unnamed exception", 
+                const char *content = "A data_structure exception was thrown.", 
+                bool selfDestruct = false, 
+                const char *separator = ":\n\t"
+            ) {
+                ull size {strlen(exceptionName) + strlen(separator) + strlen(content) + 1};
+                this->msg = new char [size];
+                snprintf(this->msg, size, "%s%s%s", exceptionName, separator, content);
+                
+                // Delete content if allocated with new.
+                // For convenience, may change later.
+                if (selfDestruct) {
+                    delete[] content;
+                }
             }
             inline ~base() {
                 delete[] msg;
@@ -67,7 +75,7 @@ namespace ds {
         struct out_of_bounds : public base {
 
             public:
-            inline out_of_bounds(const char *msg, ull size) : base {msg, size, "ds out-of-bounds exception", 32} {
+            inline out_of_bounds(const char *msg, bool selfDestruct = false) : base {"ds out-of-bounds exception", msg, selfDestruct} {
             }
         };
     }
@@ -141,7 +149,7 @@ namespace ds {
                 ull size {128};
                 char *msg {new char [size]};
                 snprintf(msg, size, "ds::str string access at index %llu with length %llu.", index, n);
-                throw exception::out_of_bounds {msg, size};
+                throw exception::out_of_bounds {msg, true};
             }
             return s[index];
         }
@@ -307,6 +315,8 @@ namespace ds {
      * ds::pair<int, int> // Pair which also doubles an an iterator?
      * 
      * To Do:
+     * - Aggressive refactoring.
+     * - Stylistically avoid long lines.
      * - Exceptions for pair-iterator.
      * - Tests for pair-iterator.
      * - Need to complete pair initialization since everything else is based on it.

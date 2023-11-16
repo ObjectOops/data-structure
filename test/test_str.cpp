@@ -32,12 +32,12 @@ int main() {
     try {
         test3[-1];
     } catch (ds::exception::out_of_bounds &e) {
-        assert(strncmp(e.what(), "ds out-of-bounds exception: ds::str string access at index", 58) == 0);
+        assert(strncmp(e.what(), "ds out-of-bounds exception:\n\tds::str string access at index", 59) == 0);
     }
     try {
         test3[test3.length()];
     } catch (ds::exception::out_of_bounds &e) {
-        assert(strcmp(e.what(), "ds out-of-bounds exception: ds::str string access at index 16 with length 16.") == 0);
+        assert(strcmp(e.what(), "ds out-of-bounds exception:\n\tds::str string access at index 16 with length 16.") == 0);
     }
     test3[0] = 'w';
     assert(strcmp(test3.cstr(), "west again again") == 0);
