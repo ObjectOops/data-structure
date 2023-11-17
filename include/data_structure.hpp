@@ -48,7 +48,7 @@ namespace ds {
             char *msg;
 
             public:
-            inline base(
+            base(
                 const char *exceptionName = "ds::base unnamed exception", 
                 const char *content = "A data_structure exception was thrown.", 
                 bool selfDestruct = false, 
@@ -64,10 +64,10 @@ namespace ds {
                     delete[] content;
                 }
             }
-            inline ~base() {
+            ~base() {
                 delete[] msg;
             }
-            inline const char *what() {
+            const char *what() const noexcept {
                 return msg;
             }
         };
@@ -75,7 +75,9 @@ namespace ds {
         struct out_of_bounds : public base {
 
             public:
-            inline out_of_bounds(const char *msg, bool selfDestruct = false) : base {"ds out-of-bounds exception", msg, selfDestruct} {
+            out_of_bounds(const char *msg, bool selfDestruct = false) : 
+                base {"ds out-of-bounds exception", msg, selfDestruct} 
+            {
             }
         };
     }
@@ -91,44 +93,44 @@ namespace ds {
         };
     }
 
-    struct str {
+    class str {
 
         private:
         char *s;
-        ull n;
+        ull len;
         
         public:
-        inline str(const char *src) {
-            this->n = strlen(src);
-            this->s = new char [this->n + 1];
-            memcpy(this->s, src, n);
-            this->s[n] = '\0';
+        str(const char *src) {
+            this->len = strlen(src);
+            this->s = new char [this->len + 1];
+            memcpy(this->s, src, len);
+            this->s[len] = '\0';
         }
 
-        inline str(const str &obj) : str {obj.s} {
+        str(const str &obj) : str {obj.s} {
         }
 
-        inline str(str &&obj) {
+        str(str &&obj) noexcept {
             this->s = obj.s;
-            this->n = obj.n;
+            this->len = obj.len;
             obj.s = nullptr;
-            obj.n = 0;
+            obj.len = 0;
         }
 
-        inline str() : str {""} {
+        str() : str {""} {
         }
 
-        inline ~str() {
+        ~str() {
             delete[] s;
         }
 
-        inline ull length() const {
-            return n;
+        inline ull length() const noexcept {
+            return len;
         }
 
-        inline str substr(ull start, ull end) const {
-            start = start < n ? start : n;
-            end = end < n ? end : n;
+        str substr(ull start, ull end) const {
+            start = start < len ? start : len;
+            end = end < len ? end : len;
             ull len = end - start;
             char *buffer {new char [len + 1]};
             memcpy(buffer, s + start, len);
@@ -136,52 +138,58 @@ namespace ds {
             str ret {};
             delete[] ret.s;
             ret.s = buffer;
-            ret.n = strlen(buffer);
+            ret.len = strlen(buffer);
             return ret;
         }
 
-        inline const char *cstr() const {
+        inline const char *cstr() const noexcept {
             return s;
         }
 
-        inline char &operator[](ull index) {
-            if (index >= n) {
+        char &operator[](ull index) {
+            if (index >= len) {
                 ull size {128};
                 char *msg {new char [size]};
-                snprintf(msg, size, "ds::str string access at index %llu with length %llu.", index, n);
+                snprintf(
+                    msg, 
+                    size, 
+                    "ds::str string access at index %llu with length %llu.", 
+                    index, 
+                    len
+                );
                 throw exception::out_of_bounds {msg, true};
             }
             return s[index];
         }
 
-        inline str &operator=(const str &other) {
+        str &operator=(const str &other) {
             delete[] s;
-            s = new char [other.n + 1];
-            memcpy(s, other.s, other.n);
-            s[other.n] = '\0';
-            n = other.n;
+            s = new char [other.len + 1];
+            memcpy(s, other.s, other.len);
+            s[other.len] = '\0';
+            len = other.len;
             return *this;
         }
 
-        inline str operator+(const str &other) const {
-            ull len = n + other.n;
-            char *buffer {new char [len + 1]};
-            memcpy(buffer, s, n);
-            memcpy(buffer + n, other.s, other.n);
-            buffer[len] = '\0';
+        str operator+(const str &other) const {
+            ull size = len + other.len;
+            char *buffer {new char [size + 1]};
+            memcpy(buffer, s, len);
+            memcpy(buffer + len, other.s, other.len);
+            buffer[size] = '\0';
             str ret {};
             delete[] ret.s;
             ret.s = buffer;
-            ret.n = strlen(buffer);
+            ret.len = strlen(buffer);
             return ret;
         }
 
-        inline str &operator+=(const str &other) {
+        str &operator+=(const str &other) {
             return operator=(operator+(other));
         }
 
-        inline bool operator==(const str &other) {
-            return strncmp(s, other.s, n < other.n ? other.n : n) == 0;
+        bool operator==(const str &other) const noexcept {
+            return strncmp(s, other.s, len < other.len ? other.len : len) == 0;
         }
     };
 
@@ -189,10 +197,10 @@ namespace ds {
     // to take all parameters by reference, including primitive types.
 
     template<typename Type>
-    inline ull default_hash(const Type &);
+    ull default_hash(const Type &);
 
     template<typename Type>
-    inline bool default_compare(const Type &, const Type &);
+    bool default_compare(const Type &, const Type &);
 
     template<typename T1, typename T2>
     struct ipair {
@@ -235,7 +243,7 @@ namespace ds {
         }
     };
     template<typename Type, typename ...Types>
-    inline _argv<Type> args(const Types &...argl) {
+    _argv<Type> args(const Types &...argl) {
         ull bufferSize {sizeof...(Types)};
 
         // Type *initBuffer {new Type [bufferSize] {argl...}};
@@ -245,7 +253,7 @@ namespace ds {
         return _argv<Type> {initBuffer, bufferSize};
     }
     template<typename FirstType, typename SecondType, ull size>
-    inline _argv<ipair<FirstType, SecondType>> args(const ipair<FirstType, SecondType> (&pairs) [size]) {
+    _argv<ipair<FirstType, SecondType>> args(const ipair<FirstType, SecondType> (&pairs) [size]) {
         const ipair<FirstType, SecondType> **initBuffer {new const ipair<FirstType, SecondType>* [size]};
         for (ull i {}; i < size; ++i) {
             initBuffer[i] = &pairs[i];
@@ -316,7 +324,7 @@ namespace ds {
      * 
      * To Do:
      * - Aggressive refactoring.
-     * - Stylistically avoid long lines.
+     *      - Inline only when POD.
      * - Exceptions for pair-iterator.
      * - Tests for pair-iterator.
      * - Need to complete pair initialization since everything else is based on it.
@@ -339,7 +347,7 @@ namespace ds {
 
         bool ref;
 
-        inline void copy(pair<Type1, Type2> &other) {
+        inline void copy(pair<Type1, Type2> &other) const {
             this.left = other.left;
             this.right = other.right;
             this.n1 = other.n1;
@@ -349,7 +357,9 @@ namespace ds {
         }
 
         public:
-        pair(const Type1 &first, const Type2 &second) : v1 {new Type1 {first}}, v2 {new Type2 {second}} {
+        pair(const Type1 &first, const Type2 &second) : 
+            v1 {new Type1 {first}}, v2 {new Type2 {second}} 
+        {
         }
         pair(const pair<Type1, Type2> &other) : ref {true} {
             copy(other);
@@ -361,10 +371,10 @@ namespace ds {
             }
         }
 
-        const Type1 &getFirst() {
+        const Type1 &getFirst() const noexcept {
             return *v1;
         }
-        const Type2 &getSecond() {
+        const Type2 &getSecond() const noexcept {
             return *v2;
         }
         
@@ -403,7 +413,7 @@ namespace ds {
             tail->right = newNode;
             tail = newNode;
         }
-        inline SecondType *util_initSecondType(bool forceInit) {
+        SecondType *util_initSecondType(bool forceInit) {
             return forceInit ? new SecondType {} : nullptr;
         }
 
@@ -426,7 +436,12 @@ namespace ds {
 
     FUNC_TEMPLATE bool structure<FirstType, SecondType, Hash, Compare>::forceSecondTypeInit = false;
 
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<FirstType> argv, ull n, const Hash &hash, const Compare &compare) : 
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
+        _argv<FirstType> argv, 
+        ull n, 
+        const Hash &hash, 
+        const Compare &compare
+    ) : 
         hash {hash}, compare {compare} 
     {
         ull i {};
@@ -462,7 +477,12 @@ namespace ds {
 
         size = argv.n;
     }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(_argv<ipair<FirstType, SecondType>> argv, ull n, const Hash &hash, const Compare &compare) : 
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
+        _argv<ipair<FirstType, SecondType>> argv, 
+        ull n, 
+        const Hash &hash, 
+        const Compare &compare
+    ) : 
         hash {hash}, compare {compare} 
     {
         ull i {};
@@ -498,7 +518,11 @@ namespace ds {
 
         size = argv.n;
     }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(ull n, const Hash &hash, const Compare &compare) {
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
+        ull n, 
+        const Hash &hash, 
+        const Compare &compare
+    ) {
         structure(args<FirstType>(), n, hash, compare);
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::~structure() {
@@ -520,12 +544,12 @@ namespace ds {
     }
 
     template<typename Type>
-    inline ull default_hash(const Type &value) {
+    ull default_hash(const Type &value) {
         return value.hash();
     }
     // Modified K&R hash function.
     template<>
-    inline ull default_hash<str>(const str &s) {
+    ull default_hash<str>(const str &s) {
         ull slen {s.length()};
         ull len {slen / 8 + 1};
         ull *values {new ull [len] {}};
@@ -553,11 +577,11 @@ namespace ds {
     DEFAULT_HASH(bool)
 
     template<typename Type>
-    inline bool default_compare(const Type &lhs, const Type &rhs) {
+    bool default_compare(const Type &lhs, const Type &rhs) {
         return lhs < rhs;
     }
     template<>
-    inline bool default_compare<str>(const str &lhs, const str &rhs) {
+    bool default_compare<str>(const str &lhs, const str &rhs) {
         ull lhs_len {lhs.length()}, rhs_len {rhs.length()};
         // Assume that the null terminator will be present under normal circumstances, 
         // but mitigate the risk of buffer overflow.
