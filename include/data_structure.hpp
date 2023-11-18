@@ -67,7 +67,7 @@ namespace ds {
             ~base() {
                 delete[] msg;
             }
-            const char *what() const noexcept {
+            inline const char *what() const noexcept {
                 return msg;
             }
         };
@@ -371,27 +371,39 @@ namespace ds {
             }
         }
 
-        const Type1 &getFirst() const noexcept {
+        inline const Type1 &getFirst() const noexcept {
             return *v1;
         }
-        const Type2 &getSecond() const noexcept {
+        inline const Type2 &getSecond() const noexcept {
             return *v2;
         }
         
         pair<Type1, Type2> &operator++() { // Pre-increment
+            if (right == nullptr) {
+                throw exception::out_of_bounds {"ds::pair iterator increment out of bounds, this->right is nullptr."};
+            }
             copy(right);
             return *this;
         }
         pair<Type1, Type2> &operator++(int) { // Post-increment
+            if (right == nullptr) {
+                throw exception::out_of_bounds {"ds::pair iterator increment out of bounds, this->right is nullptr."};
+            }
             pair<Type1, Type2> &temp {*this};
             copy(right);
             return temp;
         }
         pair<Type1, Type2> &operator--() { // Pre-decrement
+            if (left == nullptr) {
+                throw exception::out_of_bounds {"ds::pair iterator increment out of bounds, this->left is nullptr."};
+            }
             copy(left);
             return *this;
         }
         pair<Type1, Type2> &operator--(int) { // Post-decrement
+            if (left == nullptr) {
+                throw exception::out_of_bounds {"ds::pair iterator increment out of bounds, this->left is nullptr."};
+            }
             pair<Type1, Type2> &temp {*this};
             copy(left);
             return temp;
