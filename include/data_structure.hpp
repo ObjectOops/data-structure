@@ -98,6 +98,9 @@ namespace ds {
         private:
         char *s;
         ull len;
+
+        str(int) { // Nothing constructor.
+        }
         
         public:
         str(const char *src) {
@@ -135,8 +138,7 @@ namespace ds {
             char *buffer {new char [len + 1]};
             memcpy(buffer, s + start, len);
             buffer[len] = '\0';
-            str ret {};
-            delete[] ret.s;
+            str ret {0};
             ret.s = buffer;
             ret.len = strlen(buffer);
             return ret;
@@ -177,8 +179,7 @@ namespace ds {
             memcpy(buffer, s, len);
             memcpy(buffer + len, other.s, other.len);
             buffer[size] = '\0';
-            str ret {};
-            delete[] ret.s;
+            str ret {0};
             ret.s = buffer;
             ret.len = strlen(buffer);
             return ret;
@@ -347,7 +348,7 @@ namespace ds {
 
         bool ref;
 
-        inline void copy(pair<Type1, Type2> &other) const {
+        inline void copy(pair<Type1, Type2> &other) const noexcept {
             this.left = other.left;
             this.right = other.right;
             this.n1 = other.n1;
@@ -380,14 +381,18 @@ namespace ds {
         
         pair<Type1, Type2> &operator++() { // Pre-increment
             if (right == nullptr) {
-                throw exception::out_of_bounds {"ds::pair iterator increment out of bounds, this->right is nullptr."};
+                throw exception::out_of_bounds {
+                    "ds::pair iterator increment out of bounds, this->right is nullptr."
+                };
             }
             copy(right);
             return *this;
         }
         pair<Type1, Type2> &operator++(int) { // Post-increment
             if (right == nullptr) {
-                throw exception::out_of_bounds {"ds::pair iterator increment out of bounds, this->right is nullptr."};
+                throw exception::out_of_bounds {
+                    "ds::pair iterator increment out of bounds, this->right is nullptr."
+                };
             }
             pair<Type1, Type2> &temp {*this};
             copy(right);
@@ -395,14 +400,18 @@ namespace ds {
         }
         pair<Type1, Type2> &operator--() { // Pre-decrement
             if (left == nullptr) {
-                throw exception::out_of_bounds {"ds::pair iterator increment out of bounds, this->left is nullptr."};
+                throw exception::out_of_bounds {
+                    "ds::pair iterator increment out of bounds, this->left is nullptr."
+                };
             }
             copy(left);
             return *this;
         }
         pair<Type1, Type2> &operator--(int) { // Post-decrement
             if (left == nullptr) {
-                throw exception::out_of_bounds {"ds::pair iterator increment out of bounds, this->left is nullptr."};
+                throw exception::out_of_bounds {
+                    "ds::pair iterator increment out of bounds, this->left is nullptr."
+                };
             }
             pair<Type1, Type2> &temp {*this};
             copy(left);
