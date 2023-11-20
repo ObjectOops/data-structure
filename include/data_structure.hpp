@@ -64,6 +64,15 @@ namespace ds {
                     delete[] content;
                 }
             }
+            base(const base &other) {
+                ull size {strlen(other.msg) + 1};
+                this->msg = new char [size];
+                memcpy(msg, other.msg, size);
+            }
+            base(base &&other) noexcept {
+                this->msg = other.msg;
+                other.msg = nullptr;
+            }
             ~base() {
                 delete[] msg;
             }
@@ -324,14 +333,9 @@ namespace ds {
      * ds::pair<int, int> // Pair which also doubles an an iterator?
      * 
      * To Do:
-     * - Aggressive refactoring.
-     *      - Inline only when POD.
-     * - Exceptions for pair-iterator.
      * - Tests for pair-iterator.
-     * - Need to complete pair initialization since everything else is based on it.
-     * - Add noexcept and const later.
-     * - Explicitly inline some functions?
      * - May need some kind of state class to manage weird pair-structure interactions.
+     *      - Use address of object to determine ownership!
      */
 
     template<typename Type1, typename Type2>
@@ -363,19 +367,22 @@ namespace ds {
         }
 
         inline void copy(pair<Type1, Type2> &other) noexcept {
-            this.left = other.left;
-            this.right = other.right;
-            this.n1 = other.n1;
-            this.n2 = other.n2;
-            this.v1 = other.v1;
-            this.v2 = other.v2;
+            this->left = other.left;
+            this->right = other.right;
+            this->n1 = other.n1;
+            this->n2 = other.n2;
+            this->v1 = other.v1;
+            this->v2 = other.v2;
         }
 
         public:
         pair(const Type1 &first, const Type2 &second) : 
-            v1 {new Type1 {first}}, v2 {new Type2 {second}}, ref {false} 
+            left {nullptr}, right {nullptr}, n1 {nullptr}, n2 {nullptr}, 
+            v1 {new Type1 {first}}, v2 {new Type2 {second}}, 
+            ref {false} 
         {
-            left = right = n1 = n2 = nullptr;
+        }
+        pair() : pair(Type1 {}, Type2 {}) {
         }
         pair(const pair<Type1, Type2> &other) : ref {true} {
             copy(other);
@@ -397,39 +404,39 @@ namespace ds {
         pair<Type1, Type2> &operator++() { // Pre-increment
             if (right == nullptr) {
                 throw exception::out_of_bounds {
-                    "ds::pair iterator increment out of bounds, this->right is nullptr."
+                    "ds::pair iterator pre-increment out of bounds, this->right is nullptr."
                 };
             }
-            copy(right);
+            copy(*right);
             return *this;
         }
         pair<Type1, Type2> &operator++(int) { // Post-increment
             if (right == nullptr) {
                 throw exception::out_of_bounds {
-                    "ds::pair iterator increment out of bounds, this->right is nullptr."
+                    "ds::pair iterator post-increment out of bounds, this->right is nullptr."
                 };
             }
             pair<Type1, Type2> &temp {*this};
-            copy(right);
+            copy(*right);
             return temp;
         }
         pair<Type1, Type2> &operator--() { // Pre-decrement
             if (left == nullptr) {
                 throw exception::out_of_bounds {
-                    "ds::pair iterator increment out of bounds, this->left is nullptr."
+                    "ds::pair iterator pre-decrement out of bounds, this->left is nullptr."
                 };
             }
-            copy(left);
+            copy(*left);
             return *this;
         }
         pair<Type1, Type2> &operator--(int) { // Post-decrement
             if (left == nullptr) {
                 throw exception::out_of_bounds {
-                    "ds::pair iterator increment out of bounds, this->left is nullptr."
+                    "ds::pair iterator post-decrement out of bounds, this->left is nullptr."
                 };
             }
             pair<Type1, Type2> &temp {*this};
-            copy(left);
+            copy(*left);
             return temp;
         }
     };

@@ -3,6 +3,7 @@ set(test_names
     test_compare
     test_init
     test_str
+    test_pair
 )
 
 foreach(test_name ${test_names})
