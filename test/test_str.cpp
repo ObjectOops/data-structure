@@ -31,11 +31,13 @@ int main() {
     // assert(test3[test3.length()] == -1);
     try {
         test3[-1];
+        assert(false && "Out-of-bounds string subscript should not succeed.");
     } catch (ds::exception::out_of_bounds &e) {
         assert(strncmp(e.what(), "ds out-of-bounds exception:\n\tds::str string access at index", 59) == 0);
     }
     try {
         test3[test3.length()];
+        assert(false && "Out-of-bounds string subscript should not succeed.");
     } catch (ds::exception::out_of_bounds &e) {
         assert(strcmp(e.what(), "ds out-of-bounds exception:\n\tds::str string access at index 16 with length 16.") == 0);
     }
