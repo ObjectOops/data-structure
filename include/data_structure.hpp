@@ -219,12 +219,12 @@ namespace ds {
         friend class structure;
 
         private:
-        const T1 *first;
-        const T2 *second;
+        T1 *first;
+        T2 *second;
 
         public:
         ipair(const T1 &first, const T2 &second) : 
-            first {&first}, second {&second} 
+            first {new T1 {first}}, second {new T2 {second}} 
         {
         }
     };
@@ -496,11 +496,11 @@ namespace ds {
         ull i {};
         if (argv.n > 0 && ft_baseHead == nullptr) {
             ft_baseHead = new _node<FirstType> {};
-            ft_baseHead->p = new FirstType {*argv.v[0]->first};
+            ft_baseHead->p = argv.v[0]->first;
             ft_baseTail = ft_baseHead;
 
             st_baseHead = new _node<SecondType> {};
-            st_baseHead->p = new SecondType {*argv.v[0]->second};
+            st_baseHead->p = argv.v[0]->second;
             st_baseTail = st_baseHead;
 
             linkedlist.head = new _node<pair<FirstType, SecondType>> {};
@@ -511,11 +511,11 @@ namespace ds {
         }
         for (; i < argv.n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
-            rightNode->p = new FirstType {*argv.v[i]->first};
+            rightNode->p = argv.v[i]->first;
             util_link(ft_baseTail, rightNode);
 
             _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
-            rightNodeSecond->p = new SecondType {*argv.v[i]->second};
+            rightNodeSecond->p = argv.v[i]->second;
             util_link(st_baseTail, rightNodeSecond);
 
             _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
