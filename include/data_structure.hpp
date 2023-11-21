@@ -333,7 +333,7 @@ namespace ds {
      * ds::pair<int, int> // Pair which also doubles an an iterator?
      * 
      * To Do:
-     * - Tests for pair-iterator.
+     * - Tests for iterator.
      * - May need some kind of state class to manage weird pair-structure interactions.
      *      - Use address of object to determine ownership!
      */
@@ -345,99 +345,39 @@ namespace ds {
         friend class structure;
 
         private:
-        pair<Type1, Type2> *left, *right;
         _node<Type1> *n1;
         _node<Type2> *n2;
-        Type1 *v1;
-        Type2 *v2;
 
-        bool ref;
+        bool ref; // true --> don't delete on destruction, false --> delete on destruction
 
-        pair(
-            pair<Type1, Type2> *left, 
-            pair<Type1, Type2> *right, 
-            _node<Type1> *n1, 
-            _node<Type2> *n2, 
-            Type1 *v1, 
-            Type2 *v2
-        ) : left {left}, right {right}, 
-            n1 {n1}, n2 {n2}, v1 {v1}, v2 {v2}, 
-            ref {true} 
-        {
-        }
-
-        inline void copy(pair<Type1, Type2> &other) noexcept {
-            this->left = other.left;
-            this->right = other.right;
-            this->n1 = other.n1;
-            this->n2 = other.n2;
-            this->v1 = other.v1;
-            this->v2 = other.v2;
+        pair(_node<Type1> *n1, _node<Type2> *n2) : n1 {n1}, n2 {n2}, ref {true} {
         }
 
         public:
-        pair(const Type1 &first, const Type2 &second) : 
-            left {nullptr}, right {nullptr}, n1 {nullptr}, n2 {nullptr}, 
-            v1 {new Type1 {first}}, v2 {new Type2 {second}}, 
-            ref {false} 
-        {
+        pair(const Type1 &first, const Type2 &second) : ref {false} {
+            n1 = new _node<Type1> {};
+            n2 = new _node<Type2> {};
+            n1->p = new Type1 {first};
+            n2->p = new Type2 {second};
         }
         pair() : pair(Type1 {}, Type2 {}) {
         }
-        pair(const pair<Type1, Type2> &other) : ref {true} {
-            copy(other);
+        pair(const pair<Type1, Type2> &other) : pair {other.n1, other.n2} {
         }
         ~pair() {
             if (!ref) {
-                delete v1;
-                delete v2;
+                delete n1->p;
+                delete n2->p;
+                delete n1;
+                delete n2;
             }
         }
 
         inline const Type1 &getFirst() const noexcept {
-            return *v1;
+            return *(n1->p);
         }
         inline const Type2 &getSecond() const noexcept {
-            return *v2;
-        }
-        
-        pair<Type1, Type2> &operator++() { // Pre-increment
-            if (right == nullptr) {
-                throw exception::out_of_bounds {
-                    "ds::pair iterator pre-increment out of bounds, this->right is nullptr."
-                };
-            }
-            copy(*right);
-            return *this;
-        }
-        pair<Type1, Type2> &operator++(int) { // Post-increment
-            if (right == nullptr) {
-                throw exception::out_of_bounds {
-                    "ds::pair iterator post-increment out of bounds, this->right is nullptr."
-                };
-            }
-            pair<Type1, Type2> &temp {*this};
-            copy(*right);
-            return temp;
-        }
-        pair<Type1, Type2> &operator--() { // Pre-decrement
-            if (left == nullptr) {
-                throw exception::out_of_bounds {
-                    "ds::pair iterator pre-decrement out of bounds, this->left is nullptr."
-                };
-            }
-            copy(*left);
-            return *this;
-        }
-        pair<Type1, Type2> &operator--(int) { // Post-decrement
-            if (left == nullptr) {
-                throw exception::out_of_bounds {
-                    "ds::pair iterator post-decrement out of bounds, this->left is nullptr."
-                };
-            }
-            pair<Type1, Type2> &temp {*this};
-            copy(*left);
-            return temp;
+            return *(n2->p);
         }
     };
     
@@ -459,7 +399,7 @@ namespace ds {
             friend structure;
             
             private:
-            pair<FirstType, SecondType> *head {nullptr}, *tail {nullptr};
+            _node<pair<FirstType, SecondType>> *head {nullptr}, *tail {nullptr};
 
             public:
             linkedlist_secondary(structure<FirstType, SecondType, Hash, Compare> *p) {
@@ -476,15 +416,6 @@ namespace ds {
         }
         SecondType *util_initSecondType(bool forceInit) {
             return forceInit ? new SecondType {} : nullptr;
-        }
-        void util_makePair(_node<FirstType> *ftt, _node<SecondType> *stt) {
-            pair<FirstType, SecondType> *leftPair {linkedlist.tail};
-            linkedlist.tail = new pair<FirstType, SecondType> {
-                leftPair, nullptr, 
-                ftt, stt, 
-                ftt->p, stt->p
-            };
-            leftPair->right = linkedlist.tail;
         }
 
         public:
@@ -519,11 +450,9 @@ namespace ds {
             st_baseHead->p = util_initSecondType(forceSecondTypeInit);
             st_baseTail = st_baseHead;
 
-            linkedlist.head = linkedlist.tail = new pair<FirstType, SecondType> {
-                nullptr, nullptr, 
-                ft_baseTail, st_baseTail, 
-                ft_baseTail->p, st_baseTail->p
-            };
+            linkedlist.head = new _node<pair<FirstType, SecondType>> {};
+            linkedlist.head->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            linkedlist.tail = linkedlist.head;
 
             ++i;
         }
@@ -536,7 +465,9 @@ namespace ds {
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             util_link(st_baseTail, rightNodeSecond);
 
-            util_makePair(ft_baseTail, st_baseTail);
+            _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
+            ll_node->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(linkedlist.tail, ll_node);
         }
         for (; i < n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
@@ -547,7 +478,9 @@ namespace ds {
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             util_link(st_baseTail, rightNodeSecond);
 
-            util_makePair(ft_baseTail, st_baseTail);
+            _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
+            ll_node->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(linkedlist.tail, ll_node);
         }
 
         size = argv.n;
@@ -570,11 +503,9 @@ namespace ds {
             st_baseHead->p = new SecondType {*argv.v[0]->second};
             st_baseTail = st_baseHead;
 
-            linkedlist.head = linkedlist.tail = new pair<FirstType, SecondType> {
-                nullptr, nullptr, 
-                ft_baseTail, st_baseTail, 
-                ft_baseTail->p, st_baseTail->p
-            };
+            linkedlist.head = new _node<pair<FirstType, SecondType>> {};
+            linkedlist.head->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            linkedlist.tail = linkedlist.head;
 
             ++i;
         }
@@ -587,7 +518,9 @@ namespace ds {
             rightNodeSecond->p = new SecondType {*argv.v[i]->second};
             util_link(st_baseTail, rightNodeSecond);
 
-            util_makePair(ft_baseTail, st_baseTail);
+            _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
+            ll_node->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(linkedlist.tail, ll_node);
         }
         for (; i < n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
@@ -598,7 +531,9 @@ namespace ds {
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             util_link(st_baseTail, rightNodeSecond);
 
-            util_makePair(ft_baseTail, st_baseTail);
+            _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
+            ll_node->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(linkedlist.tail, ll_node);
         }
 
         size = argv.n;
@@ -627,11 +562,14 @@ namespace ds {
             delete tnode;
         }
 
-        pair<FirstType, SecondType> *ll_pair {linkedlist.head};
-        while (ll_pair != nullptr) {
-            pair<FirstType, SecondType> *currentPair {ll_pair};
-            ll_pair = ll_pair->right;
-            delete currentPair;
+        _node<pair<FirstType, SecondType>> *ll_dnode {linkedlist.head};
+        while (ll_dnode != nullptr) {
+            delete ll_dnode->p->n1;
+            delete ll_dnode->p->n2;
+            delete ll_dnode->p;
+            _node<pair<FirstType, SecondType>> *tnode {ll_dnode};
+            ll_dnode = ll_dnode->right;
+            delete tnode;
         }
     }
 

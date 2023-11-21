@@ -2,6 +2,7 @@ set(test_names
     test_hash
     test_compare
     test_init
+    test_deallocation
     test_str
     test_pair
 )
