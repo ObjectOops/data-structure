@@ -409,7 +409,7 @@ namespace ds {
         linkedlist_secondary linkedlist {this};
 
         template<typename _nodeType>
-        inline void util_link(_nodeType tail, _nodeType newNode) {
+        inline void util_link(_nodeType *&tail, _nodeType *newNode) {
             newNode->left = tail;
             tail->right = newNode;
             tail = newNode;
@@ -483,7 +483,7 @@ namespace ds {
             util_link(linkedlist.tail, ll_node);
         }
 
-        size = argv.n;
+        size = argv.n > n ? argv.n : n;
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
         _argv<ipair<FirstType, SecondType>> argv, 
@@ -536,7 +536,7 @@ namespace ds {
             util_link(linkedlist.tail, ll_node);
         }
 
-        size = argv.n;
+        size = argv.n > n ? argv.n : n;
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
         ull n, 
@@ -564,8 +564,6 @@ namespace ds {
 
         _node<pair<FirstType, SecondType>> *ll_dnode {linkedlist.head};
         while (ll_dnode != nullptr) {
-            delete ll_dnode->p->n1;
-            delete ll_dnode->p->n2;
             delete ll_dnode->p;
             _node<pair<FirstType, SecondType>> *tnode {ll_dnode};
             ll_dnode = ll_dnode->right;
