@@ -283,6 +283,9 @@ namespace ds {
         private:
         Type *p {nullptr};
         _node<Type> *left {nullptr}, *right {nullptr};
+
+        _node() {
+        }
     };
 
     /*
@@ -336,6 +339,7 @@ namespace ds {
      * - Tests for iterator.
      * - May need some kind of state class to manage weird pair-structure interactions.
      *      - Use address of object to determine ownership!
+     * - Add copy and move constructors for structure.
      */
 
     template<typename Type1, typename Type2>
@@ -364,6 +368,12 @@ namespace ds {
         }
         pair(const pair<Type1, Type2> &other) : pair {other.n1, other.n2} {
         }
+        pair(const pair<Type1, Type2> &&other) {
+            this->n1 = other.n1;
+            this->n2 = other.n2;
+            other.n1 = nullptr;
+            other.n2 = nullptr;
+        }
         ~pair() {
             if (!ref) {
                 delete n1->p;
@@ -374,10 +384,10 @@ namespace ds {
         }
 
         inline const Type1 &getFirst() const noexcept {
-            return *(n1->p);
+            return *n1->p;
         }
         inline const Type2 &getSecond() const noexcept {
-            return *(n2->p);
+            return *n2->p;
         }
     };
     
@@ -401,12 +411,13 @@ namespace ds {
             private:
             _node<pair<FirstType, SecondType>> *head {nullptr}, *tail {nullptr};
 
-            public:
             linkedlist_secondary(structure<FirstType, SecondType, Hash, Compare> *p) {
                 secondary::primary = p;
             }
+
+            public:
+
         };
-        linkedlist_secondary linkedlist {this};
 
         template<typename _nodeType>
         inline void util_link(_nodeType *&tail, _nodeType *newNode) {
@@ -427,7 +438,103 @@ namespace ds {
         structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
         structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
         structure(ull, const Hash &hash = default_hash, const Compare &compare = default_compare);
+        structure(const structure<FirstType, SecondType, Hash, Compare> &other);
+        structure(const structure<FirstType, SecondType, Hash, Compare> &&other) noexcept;
         ~structure();
+
+        class iterator {
+
+            private:
+            structure<FirstType, SecondType, Hash, Compare> *primary;
+            _node<pair<FirstType, SecondType>> *p;
+
+            iterator(
+                structure<FirstType, SecondType, Hash, Compare> *primary, 
+                _node<pair<FirstType, SecondType>> *p
+            ) : primary {primary}, p {p} 
+            {
+            }
+
+            public:
+            iterator(const iterator &other) : iterator {other.primary, other.p} {
+            }
+
+            inline pair<FirstType, SecondType> &value() const noexcept {
+                return *p->p;
+            }
+            inline pair<FirstType, SecondType> &operator*() const noexcept {
+                return *p->p;
+            }
+
+            inline pair<FirstType, SecondType> &next() {
+                pair<FirstType, SecondType> &ret {*p->p};
+                p = p->right;
+                if (p == nullptr) {
+                    throw exception::out_of_bounds {
+                        R"(ds::structure::iterator cannot advance to next element. 
+    Next element does not exist. this->next() is invalid.)"
+                    };
+                }
+                return ret;
+            }
+            inline pair<FirstType, SecondType> &operator++() { // Pre-increment.
+                p = p->right;
+                if (p == nullptr) {
+                    throw exception::out_of_bounds {
+                        R"(ds::structure::iterator pre-increment failed. 
+    Next element does not exist. ++(*this) is invalid.)"
+                    };
+                }
+                return *p->p;
+            }
+            inline pair<FirstType, SecondType> &operator++(int) { // Post-increment.
+                pair<FirstType, SecondType> &ret {*p->p};
+                p = p->right;
+                if (p == nullptr) {
+                    throw exception::out_of_bounds {
+                        R"(ds::structure::iterator post-increment failed. 
+    Next element does not exist. (*this)++ is invalid.)"
+                    };
+                }
+                return ret;
+            }
+
+            inline pair<FirstType, SecondType> &prev() {
+                pair<FirstType, SecondType> &ret {*p->p};
+                p = p->left;
+                if (p == nullptr) {
+                    throw exception::out_of_bounds {
+                        R"(ds::structure::iterator cannot advance to previous element. 
+    Previous element does not exist. this->prev() is invalid.)"
+                    };
+                }
+                return ret;
+            }
+
+            inline pair<FirstType, SecondType> &operator--() { // Pre-decrement.
+                p = p->left;
+                if (p == nullptr) {
+                    throw exception::out_of_bounds {
+                        R"(ds::structure::iterator pre-decrement failed. 
+    Previous element does not exist. --(*this) is invalid.)"
+                    };
+                }
+                return *p->p;
+            }
+            inline pair<FirstType, SecondType> &operator--(int) { // Post-decrement.
+                pair<FirstType, SecondType> &ret {*p->p};
+                p = p->left;
+                if (p == nullptr) {
+                    throw exception::out_of_bounds {
+                        R"(ds::structure::iterator post-decrement failed. 
+    Previous element does not exist. (*this)-- is invalid.)"
+                    };
+                }
+                return ret;
+            }
+        };
+
+        linkedlist_secondary linkedlist {this};
     };
 
     FUNC_TEMPLATE bool structure<FirstType, SecondType, Hash, Compare>::forceSecondTypeInit = false;
