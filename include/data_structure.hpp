@@ -89,6 +89,15 @@ namespace ds {
             {
             }
         };
+
+        struct null_access : public base {
+
+            public:
+            null_access(const char *msg) : 
+                base {"ds null access exception", msg, false} 
+            {
+            }
+        };
     }
 
     namespace util {
@@ -336,7 +345,6 @@ namespace ds {
      * ds::pair<int, int> // Pair which also doubles an an iterator?
      * 
      * To Do:
-     * - Tests for iterator.
      * - May need some kind of state class to manage weird pair-structure interactions.
      *      - Use address of object to determine ownership!
      * - Add copy and move constructors for structure.
@@ -386,8 +394,17 @@ namespace ds {
         inline const Type1 &getFirst() const noexcept {
             return *n1->p;
         }
-        inline const Type2 &getSecond() const noexcept {
+        const Type2 &getSecond() const {
+            if (n2->p == nullptr) {
+                throw exception::null_access {
+                    "Second value in pair is not initialized. this->getSecond() is invalid."
+                };
+            }
             return *n2->p;
+        }
+
+        bool secondExists() const noexcept {
+            return n2->p != nullptr;
         }
     };
     
@@ -404,6 +421,10 @@ namespace ds {
             structure<FirstType, SecondType, Hash, Compare> *primary;
         };
 
+        public:
+        class iterator; // Class prototype;
+        private:
+
         struct linkedlist_secondary : public secondary {
 
             friend structure;
@@ -416,7 +437,13 @@ namespace ds {
             }
 
             public:
+            iterator begin() noexcept {
+                return iterator {secondary::primary, head};
+            }
 
+            iterator end() noexcept {
+                return iterator {secondary::primary, tail};
+            }
         };
 
         template<typename _nodeType>
@@ -444,6 +471,8 @@ namespace ds {
 
         class iterator {
 
+            friend linkedlist_secondary;
+
             private:
             structure<FirstType, SecondType, Hash, Compare> *primary;
             _node<pair<FirstType, SecondType>> *p;
@@ -455,19 +484,43 @@ namespace ds {
             {
             }
 
+            void test_ptr(const void *ptr) const {
+                if (ptr == nullptr) {
+                    throw exception::null_access {"Iterator references null."};
+                }
+            }
+
             public:
+            iterator() : iterator {nullptr, nullptr} {
+            }
             iterator(const iterator &other) : iterator {other.primary, other.p} {
             }
-
-            inline pair<FirstType, SecondType> &value() const noexcept {
-                return *p->p;
-            }
-            inline pair<FirstType, SecondType> &operator*() const noexcept {
-                return *p->p;
+            iterator &operator=(const iterator &other) noexcept {
+                this->primary = other.primary;
+                this->p = other.p;
+                return *this;
             }
 
-            inline pair<FirstType, SecondType> &next() {
-                pair<FirstType, SecondType> &ret {*p->p};
+            pair<FirstType, SecondType> &value() const {
+                test_ptr(p);
+                return *p->p;
+            }
+            pair<FirstType, SecondType> &operator*() const {
+                test_ptr(p);
+                return *p->p;
+            }
+
+            bool hasNext() {
+                test_ptr(p);
+                return p->right != nullptr;
+            }
+            bool hasPrev() {
+                test_ptr(p);
+                return p->left != nullptr;
+            }
+
+            pair<FirstType, SecondType> &next() {
+                test_ptr(p);
                 p = p->right;
                 if (p == nullptr) {
                     throw exception::out_of_bounds {
@@ -475,9 +528,10 @@ namespace ds {
     Next element does not exist. this->next() is invalid.)"
                     };
                 }
-                return ret;
+                return *p->p;
             }
-            inline pair<FirstType, SecondType> &operator++() { // Pre-increment.
+            iterator &operator++() { // Pre-increment.
+                test_ptr(p);
                 p = p->right;
                 if (p == nullptr) {
                     throw exception::out_of_bounds {
@@ -485,10 +539,11 @@ namespace ds {
     Next element does not exist. ++(*this) is invalid.)"
                     };
                 }
-                return *p->p;
+                return *this;
             }
-            inline pair<FirstType, SecondType> &operator++(int) { // Post-increment.
-                pair<FirstType, SecondType> &ret {*p->p};
+            iterator &operator++(int) { // Post-increment.
+                test_ptr(p);
+                iterator &ret {*this};
                 p = p->right;
                 if (p == nullptr) {
                     throw exception::out_of_bounds {
@@ -499,8 +554,8 @@ namespace ds {
                 return ret;
             }
 
-            inline pair<FirstType, SecondType> &prev() {
-                pair<FirstType, SecondType> &ret {*p->p};
+            pair<FirstType, SecondType> &prev() {
+                test_ptr(p);
                 p = p->left;
                 if (p == nullptr) {
                     throw exception::out_of_bounds {
@@ -508,10 +563,11 @@ namespace ds {
     Previous element does not exist. this->prev() is invalid.)"
                     };
                 }
-                return ret;
+                return *p->p;
             }
 
-            inline pair<FirstType, SecondType> &operator--() { // Pre-decrement.
+            iterator &operator--() { // Pre-decrement.
+                test_ptr(p);
                 p = p->left;
                 if (p == nullptr) {
                     throw exception::out_of_bounds {
@@ -519,10 +575,11 @@ namespace ds {
     Previous element does not exist. --(*this) is invalid.)"
                     };
                 }
-                return *p->p;
+                return *this;
             }
-            inline pair<FirstType, SecondType> &operator--(int) { // Post-decrement.
-                pair<FirstType, SecondType> &ret {*p->p};
+            iterator &operator--(int) { // Post-decrement.
+                test_ptr(p);
+                iterator &ret {*this};
                 p = p->left;
                 if (p == nullptr) {
                     throw exception::out_of_bounds {

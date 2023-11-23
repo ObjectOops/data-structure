@@ -5,6 +5,7 @@ set(test_names
     test_deallocation
     test_str
     test_pair
+    test_iterator
 )
 
 foreach(test_name ${test_names})
