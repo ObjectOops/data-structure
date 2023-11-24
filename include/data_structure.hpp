@@ -394,7 +394,7 @@ namespace ds {
         inline const Type1 &getFirst() const noexcept {
             return *n1->p;
         }
-        const Type2 &getSecond() const {
+        Type2 &getSecond() const {
             if (n2->p == nullptr) {
                 throw exception::null_access {
                     "Second value in pair is not initialized. this->getSecond() is invalid."
@@ -414,6 +414,13 @@ namespace ds {
         _node<FirstType> *ft_baseHead {nullptr}, *ft_baseTail {nullptr};
         _node<SecondType> *st_baseHead {nullptr}, *st_baseTail {nullptr};
         ull size {};
+
+        struct _cmd {
+            enum TYPE {INSERT, REMOVE};
+            TYPE type;
+            ull data;
+        };
+        _node<_cmd> *cmd_head {nullptr}, *cmd_tail {nullptr};
 
         struct secondary {
 
@@ -437,11 +444,11 @@ namespace ds {
             }
 
             public:
-            iterator begin() noexcept {
+            iterator begin() const {
                 return iterator {secondary::primary, head};
             }
 
-            iterator end() noexcept {
+            iterator end() const {
                 return iterator {secondary::primary, tail};
             }
         };
@@ -457,10 +464,12 @@ namespace ds {
         }
 
         public:
-        static bool forceSecondTypeInit;
-
         Hash hash;
         Compare compare;
+
+        bool forceSecondTypeInit {false};
+
+        linkedlist_secondary linkedlist {this};
 
         structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
         structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
@@ -499,6 +508,9 @@ namespace ds {
                 this->primary = other.primary;
                 this->p = other.p;
                 return *this;
+            }
+            bool valid() const {
+                return p != nullptr;
             }
 
             pair<FirstType, SecondType> &value() const {
@@ -590,11 +602,7 @@ namespace ds {
                 return ret;
             }
         };
-
-        linkedlist_secondary linkedlist {this};
     };
-
-    FUNC_TEMPLATE bool structure<FirstType, SecondType, Hash, Compare>::forceSecondTypeInit = false;
 
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
         _argv<FirstType> argv, 
