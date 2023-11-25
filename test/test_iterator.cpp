@@ -64,12 +64,16 @@ int main() {
     assert(iter.value().getFirst() == 5);
     assert(iter.value().getSecond() == 6);
 
+    assert(iter.hasNext());
+    assert(++iter == test.linkedlist.end());
     assert(!iter.hasNext());
 
     iter = test.linkedlist.end();
 
     assert(iter.hasPrev());
     assert(!iter.hasNext());
+    assert(!iter.valid());
+    --iter;
 
     assert(iter.value().getFirst() == 5);
     assert(iter.value().getSecond() == 6);
@@ -82,8 +86,8 @@ int main() {
 
     assert(!iter.hasPrev());
 
-    assert(iter.next().getFirst() == 3);
-    assert(iter.prev().getFirst() == 1);
+    assert(iter.next().getFirst() == 1);
+    assert(iter.valid());
 
     return 0;
 }
