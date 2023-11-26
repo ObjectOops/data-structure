@@ -1,4 +1,5 @@
 set(test_names
+    test_include
     test_hash
     test_compare
     test_init

@@ -33,13 +33,13 @@ int main() {
         test3[-1];
         assert(false && "Out-of-bounds string subscript should not succeed.");
     } catch (ds::exception::out_of_bounds &e) {
-        assert(strncmp(e.what(), "ds out-of-bounds exception:\n\tds::str string access at index", 59) == 0);
+        assert(strncmp(e.what(), "ds::out_of_bounds exception:\n\tds::str string access at index", 60) == 0);
     }
     try {
         test3[test3.length()];
         assert(false && "Out-of-bounds string subscript should not succeed.");
     } catch (ds::exception::out_of_bounds &e) {
-        assert(strcmp(e.what(), "ds out-of-bounds exception:\n\tds::str string access at index 16 with length 16.") == 0);
+        assert(strcmp(e.what(), "ds::out_of_bounds exception:\n\tds::str string access at index 16 with length 16.") == 0);
     }
     test3[0] = 'w';
     assert(strcmp(test3.cstr(), "west again again") == 0);

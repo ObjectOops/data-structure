@@ -4,7 +4,9 @@
 #include <string.h>
 #include <malloc.h>
 
+// Specifies to use a function pointer to the hash function for type `T`.
 #define dhash_t(T) ull (*) (const T &)
+// Specifies to use a function pointer to the compare function for type `T`.
 #define dcomp_t(T) bool (*) (const T &, const T &)
 
 #define CLASS_TEMPLATE \
@@ -23,15 +25,18 @@ template<\
     typename Compare \
 >
 
+// `DEFAULT_HASH` and `DEFAULT_COMPARE` are used internally to create default definitions 
+// for primitive types `PT`.
+
 #define DEFAULT_HASH(PT) \
 template<> \
-inline ull default_hash<PT>(const PT &value) { \
+ull default_hash<PT>(const PT &value) { \
     return value; \
 }
 
 #define DEFAULT_COMPARE(PT) \
 template<> \
-inline bool default_compare<PT>(const PT &lhs, const PT &rhs) { \
+bool default_compare<PT>(const PT &lhs, const PT &rhs) { \
     return lhs < rhs; \
 }
 
@@ -39,9 +44,25 @@ namespace ds {
 
     typedef unsigned long long ull;
 
-    // `ds::exception` is for internal use only!
+    // Extra utilities.
+    namespace util {
+
+        // Indicates that `Type` and `OtherType` are not the same at compile-time.
+        template<typename Type, typename OtherType>
+        struct same_type {
+            static constexpr bool result = false;
+        };
+        // Indicates that `Type` and `Type` are the same at compile-time.
+        template<typename Type>
+        struct same_type<Type, Type> {
+            static constexpr bool result = true;
+        };
+    }
+
+    // Throwing exceptions from `ds::exception` are for internal use only!
     namespace exception {
 
+        // Base exception.
         struct base {
 
             protected:
@@ -50,7 +71,7 @@ namespace ds {
             public:
             base(
                 const char *exceptionName = "ds::base unnamed exception", 
-                const char *content = "A data_structure exception was thrown.", 
+                const char *content = "An exception was thrown.", 
                 bool selfDestruct = false, 
                 const char *separator = ":\n\t"
             ) {
@@ -58,8 +79,7 @@ namespace ds {
                 this->msg = new char [size];
                 snprintf(this->msg, size, "%s%s%s", exceptionName, separator, content);
                 
-                // Delete content if allocated with new.
-                // For convenience, may change later.
+                // Delete `content` if allocated with new. May change later.
                 if (selfDestruct) {
                     delete[] content;
                 }
@@ -68,6 +88,7 @@ namespace ds {
                 ull size {strlen(other.msg) + 1};
                 this->msg = new char [size];
                 memcpy(msg, other.msg, size);
+                this->msg[size - 1] = '\0';
             }
             base(base &&other) noexcept {
                 this->msg = other.msg;
@@ -76,48 +97,42 @@ namespace ds {
             ~base() {
                 delete[] msg;
             }
-            inline const char *what() const noexcept {
+
+            const char *what() const noexcept {
                 return msg;
             }
         };
 
+        // Out-of-bounds exception.
         struct out_of_bounds : public base {
 
             public:
             out_of_bounds(const char *msg, bool selfDestruct = false) : 
-                base {"ds out-of-bounds exception", msg, selfDestruct} 
+                base {"ds::out_of_bounds exception", msg, selfDestruct} 
             {
             }
         };
 
+        // Null / invalid data access exception.
         struct null_access : public base {
 
             public:
             null_access(const char *msg) : 
-                base {"ds null access exception", msg, false} 
+                base {"ds::null_access exception", msg, false} 
             {
             }
         };
     }
 
-    namespace util {
-        template<typename Type, typename OtherType>
-        struct same_type {
-            static constexpr bool result = false;
-        };
-        template<typename Type>
-        struct same_type<Type, Type> {
-            static constexpr bool result = true;
-        };
-    }
-
+    // Basic string class.
     class str {
 
         private:
         char *s;
         ull len;
 
-        str(int) { // Nothing constructor.
+        // Constructor for internal use.
+        str(char *s, ull len) : s {s}, len {len} {
         }
         
         public:
@@ -127,25 +142,21 @@ namespace ds {
             memcpy(this->s, src, len);
             this->s[len] = '\0';
         }
-
         str(const str &obj) : str {obj.s} {
         }
-
         str(str &&obj) noexcept {
             this->s = obj.s;
             this->len = obj.len;
             obj.s = nullptr;
             obj.len = 0;
         }
-
         str() : str {""} {
         }
-
         ~str() {
             delete[] s;
         }
 
-        inline ull length() const noexcept {
+        ull length() const noexcept {
             return len;
         }
 
@@ -153,16 +164,15 @@ namespace ds {
             start = start < len ? start : len;
             end = end < len ? end : len;
             ull len = end - start;
+
             char *buffer {new char [len + 1]};
             memcpy(buffer, s + start, len);
             buffer[len] = '\0';
-            str ret {0};
-            ret.s = buffer;
-            ret.len = strlen(buffer);
-            return ret;
+
+            return str {buffer, len};
         }
 
-        inline const char *cstr() const noexcept {
+        const char *cstr() const noexcept {
             return s;
         }
 
@@ -181,6 +191,9 @@ namespace ds {
             }
             return s[index];
         }
+        char operator[](ull index) const {
+            return operator[](index);
+        }
 
         str &operator=(const str &other) {
             delete[] s;
@@ -190,17 +203,24 @@ namespace ds {
             len = other.len;
             return *this;
         }
+        str &operator=(str &&other) {
+            delete[] this->s;
+            this->s = other.s;
+            this->len = other.len;
+            other.s = nullptr;
+            other.len = 0;
+            return *this;
+        }
 
         str operator+(const str &other) const {
-            ull size = len + other.len;
-            char *buffer {new char [size + 1]};
+            ull size = len + other.len + 1;
+            char *buffer {new char [size]};
+
             memcpy(buffer, s, len);
             memcpy(buffer + len, other.s, other.len);
-            buffer[size] = '\0';
-            str ret {0};
-            ret.s = buffer;
-            ret.len = strlen(buffer);
-            return ret;
+            buffer[size - 1] = '\0';
+
+            return str {buffer, size - 1};
         }
 
         str &operator+=(const str &other) {
@@ -212,6 +232,7 @@ namespace ds {
         }
     };
 
+    // Prototypes.
     // The class templates require the default hash and comparison functions 
     // to take all parameters by reference, including primitive types.
 
@@ -221,6 +242,7 @@ namespace ds {
     template<typename Type>
     bool default_compare(const Type &, const Type &);
 
+    // Initialization pair. Make an array of these to initialize values to pass to `args`.
     template<typename T1, typename T2>
     struct ipair {
 
@@ -238,6 +260,7 @@ namespace ds {
         }
     };
 
+    // Internal use only! For passing results from `args` to `structure` constructors.
     template<typename T>
     struct _argv {
 
@@ -261,6 +284,8 @@ namespace ds {
             delete[] v;
         }
     };
+
+    // Array-style initialization.
     template<typename Type, typename ...Types>
     _argv<Type> args(const Types &...argl) {
         ull bufferSize {sizeof...(Types)};
@@ -271,6 +296,7 @@ namespace ds {
         
         return _argv<Type> {initBuffer, bufferSize};
     }
+    // Key-value / pair initialization.
     template<typename FirstType, typename SecondType, ull size>
     _argv<ipair<FirstType, SecondType>> args(const ipair<FirstType, SecondType> (&pairs) [size]) {
         const ipair<FirstType, SecondType> **initBuffer {new const ipair<FirstType, SecondType>* [size]};
@@ -280,6 +306,7 @@ namespace ds {
         return _argv<ipair<FirstType, SecondType>> {initBuffer, size};
     }
 
+    // Internally used node type for storing data in linked lists.
     template<typename Type>
     struct _node {
         
@@ -296,60 +323,6 @@ namespace ds {
         _node() {
         }
     };
-
-    /*
-     * Pseudo Plan
-     * 
-     * Need:
-     * - Vector / Array y
-     * - Deque y
-     * - Linked List y
-     * - Circular Linked List
-     * - Set by Order y
-     * - Multiset by Order y
-     * - Map by Order y
-     * - Multimap by Order y
-     *      - Sets, maps, multisets, multimaps by hashing. y
-     * - Stack y
-     * - Queue y
-     * - Priority Queue y
-     * 
-     * ipair<int, int> arguments [] {{1, 2}, {2, 3}, {3, 4}};
-     * structure<int, int> test {args(arguments)};
-     * 
-     * test.random() --> Retrieves a pseudo-random pair. We don't need this...
-     * test.foreach(lambda) --> For each loop.
-     * 
-     * test.pair[0] --> {1, 2} // Retrieves pair / iterator of FirstType and SecondType.
-     * test.pair[1] --> {2, 3}
-     * test.pair[2] --> {3, 4}
-     * 
-     * test.first[0] --> 1 // Retrieves FirstType.
-     * test.first[1] --> 2
-     * test.first[2] --> 3
-     * 
-     * test.second[0] --> 2 // Retrieves SecondType.
-     * test.second[1] --> 3
-     * test.second[2] --> 4
-     * 
-     * // The following really only operate on on FirstType.
-     * 
-     * test.ordered // Ordered map / set operations.
-     * test.hashed // Hashed map / set operations.
-     * 
-     * test.deque // Deque operations.
-     * test.stack // Stack operations.
-     * test.queue // Queue operations.
-     * test.pq // Priority queue operations.
-     * 
-     * ds::pair<int, int> // Pair which also doubles an an iterator?
-     * 
-     * To Do:
-     * - May need some kind of state class to manage weird pair-structure interactions.
-     *      - Use address of object to determine ownership!
-     * - Add copy and move constructors for structure.
-     * - Redo function modifier things.
-     */
 
     template<typename Type1, typename Type2>
     class pair {
@@ -375,7 +348,7 @@ namespace ds {
         }
         pair() : pair(Type1 {}, Type2 {}) {
         }
-        pair(const pair<Type1, Type2> &other) : pair {other.n1, other.n2} {
+        pair(const pair<Type1, Type2> &other) : pair {*other.n1->p, *other.n2->p} {
         }
         pair(const pair<Type1, Type2> &&other) {
             this->n1 = other.n1;
@@ -392,7 +365,7 @@ namespace ds {
             }
         }
 
-        inline const Type1 &getFirst() const noexcept {
+        const Type1 &getFirst() const noexcept {
             return *n1->p;
         }
         Type2 &getSecond() const {
@@ -456,12 +429,12 @@ namespace ds {
         };
 
         template<typename _nodeType>
-        inline void util_link(_nodeType *&tail, _nodeType *&newNode) { // `tail` must be by reference.
+        void util_link(_nodeType *&tail, _nodeType *&newNode) { // `tail` must be by reference.
             newNode->left = tail;
             tail->right = newNode;
             tail = newNode;
         }
-        inline void util_link_pair(
+        void util_link_pair(
             _node<pair<FirstType, SecondType>> *tail, 
             _node<pair<FirstType, SecondType>> *newNode)
         {
