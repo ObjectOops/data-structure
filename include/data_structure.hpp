@@ -192,7 +192,7 @@ namespace ds {
             return s[index];
         }
         char operator[](ull index) const {
-            return operator[](index);
+            return const_cast<str *>(this)->operator[](index);
         }
 
         str &operator=(const str &other) {
@@ -346,6 +346,12 @@ namespace ds {
             n1->p = new Type1 {first};
             n2->p = new Type2 {second};
         }
+        pair(const Type1 &first) : ref {false} {
+            n1 = new _node<Type1> {};
+            n2 = new _node<Type2> {};
+            n1->p = new Type1 {first};
+            n2->p = nullptr;
+        }
         pair() : pair(Type1 {}, Type2 {}) {
         }
         pair(const pair<Type1, Type2> &other) : pair {*other.n1->p, *other.n2->p} {
@@ -365,16 +371,22 @@ namespace ds {
             }
         }
 
-        const Type1 &getFirst() const noexcept {
+        Type1 &getFirst() noexcept {
             return *n1->p;
         }
-        Type2 &getSecond() const {
+        const Type1 &getFirst() const noexcept {
+            return const_cast<pair<Type1, Type2> *>(this)->getFirst();
+        }
+        Type2 &getSecond() {
             if (n2->p == nullptr) {
                 throw exception::null_access {
                     "Second value in pair is not initialized. this->getSecond() is invalid."
                 };
             }
             return *n2->p;
+        }
+        const Type2 &getSecond() const {
+            return const_cast<pair<Type1, Type2> *>(this)->getSecond();
         }
 
         bool secondExists() const noexcept {
