@@ -55,14 +55,14 @@ int main() {
     assert(iter.hasNext());
     assert(!iter.hasPrev());
 
-    assert(iter.value().getFirst() == 1);
-    assert(iter.value().getSecond() == 2);
+    assert(iter.value().first() == 1);
+    assert(iter.value().second() == 2);
     ++iter;
-    assert(iter.value().getFirst() == 3);
-    assert(iter.value().getSecond() == 4);
+    assert(iter.value().first() == 3);
+    assert(iter.value().second() == 4);
     ++iter;
-    assert(iter.value().getFirst() == 5);
-    assert(iter.value().getSecond() == 6);
+    assert(iter.value().first() == 5);
+    assert(iter.value().second() == 6);
 
     assert(iter.hasNext());
     assert(++iter == test.linkedlist.end());
@@ -75,18 +75,18 @@ int main() {
     assert(!iter.valid());
     --iter;
 
-    assert(iter.value().getFirst() == 5);
-    assert(iter.value().getSecond() == 6);
+    assert(iter.value().first() == 5);
+    assert(iter.value().second() == 6);
     --iter;
-    assert(iter.value().getFirst() == 3);
-    assert(iter.value().getSecond() == 4);
+    assert(iter.value().first() == 3);
+    assert(iter.value().second() == 4);
     --iter;
-    assert(iter.value().getFirst() == 1);
-    assert(iter.value().getSecond() == 2);
+    assert(iter.value().first() == 1);
+    assert(iter.value().second() == 2);
 
     assert(!iter.hasPrev());
 
-    assert(iter.next().getFirst() == 1);
+    assert(iter.next().first() == 1);
     assert(iter.valid());
 
     return 0;

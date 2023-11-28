@@ -6,17 +6,17 @@
 int main() {
 
     ds::pair<int, int> test1;
-    assert(test1.getFirst() == 0 && test1.getSecond() == 0);
+    assert(test1.first() == 0 && test1.second() == 0);
 
     ds::pair<ds::str, int> test2 {ds::str {"test"}, 32};
-    assert(test2.getFirst() == ds::str {"test"} && test2.getSecond() == 32);
+    assert(test2.first() == ds::str {"test"} && test2.second() == 32);
 
     ds::structure<int, int> s {ds::args<int>(1, 2, 3)};
     auto iter {s.linkedlist.begin()};
     assert(!iter.value().secondExists());
     try {
-        iter.value().getSecond();
-        assert(false && "iter.value().getSecond() should not succeed.");
+        iter.value().second();
+        assert(false && "iter.value().second() should not succeed.");
     } catch (ds::exception::null_access &e) {
     }
 

@@ -371,22 +371,22 @@ namespace ds {
             }
         }
 
-        Type1 &getFirst() noexcept {
+        Type1 &first() noexcept {
             return *n1->p;
         }
-        const Type1 &getFirst() const noexcept {
-            return const_cast<pair<Type1, Type2> *>(this)->getFirst();
+        const Type1 &first() const noexcept {
+            return const_cast<pair<Type1, Type2> *>(this)->first();
         }
-        Type2 &getSecond() {
+        Type2 &second() {
             if (n2->p == nullptr) {
                 throw exception::null_access {
-                    "Second value in pair is not initialized. this->getSecond() is invalid."
+                    "Second value in pair is not initialized. this->second() is invalid."
                 };
             }
             return *n2->p;
         }
-        const Type2 &getSecond() const {
-            return const_cast<pair<Type1, Type2> *>(this)->getSecond();
+        const Type2 &second() const {
+            return const_cast<pair<Type1, Type2> *>(this)->second();
         }
 
         bool secondExists() const noexcept {
