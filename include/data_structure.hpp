@@ -14,7 +14,8 @@ template<\
     typename FirstType, \
     typename SecondType = int, \
     typename Hash = dhash_t(FirstType), \
-    typename Compare = dcomp_t(FirstType) \
+    typename Compare = dcomp_t(FirstType), \
+    bool stInit = false \
 >
 
 #define FUNC_TEMPLATE \
@@ -22,7 +23,8 @@ template<\
     typename FirstType, \
     typename SecondType, \
     typename Hash, \
-    typename Compare \
+    typename Compare, \
+    bool stInit \
 >
 
 // `DEFAULT_HASH` and `DEFAULT_COMPARE` are used internally to create default definitions 
@@ -399,6 +401,7 @@ namespace ds {
         private:
         _node<FirstType> *ft_baseHead {nullptr}, *ft_baseTail {nullptr};
         _node<SecondType> *st_baseHead {nullptr}, *st_baseTail {nullptr};
+        _node<pair<FirstType, SecondType>> *pair_baseHead {nullptr}, *pair_baseTail {nullptr};
         ull size {};
 
         struct _cmd {
@@ -418,16 +421,22 @@ namespace ds {
         class iterator; // Class prototype;
         private:
 
+        template<typename LLT>
         struct linkedlist_secondary : public secondary {
 
             friend structure;
             
             private:
-            _node<pair<FirstType, SecondType>> *head {nullptr};
-            _node<pair<FirstType, SecondType>> *tail {new _node<pair<FirstType, SecondType>> {}};
+            _node<LLT> *head {nullptr};
+            _node<LLT> *tail {new _node<LLT> {}};
 
             linkedlist_secondary(structure<FirstType, SecondType, Hash, Compare> *p) {
                 secondary::primary = p;
+            }
+
+            void refresh(_node<LLT> *node) {
+                tail->left = node;
+                node->right = tail;
             }
 
             public:
@@ -446,15 +455,6 @@ namespace ds {
             tail->right = newNode;
             tail = newNode;
         }
-        void util_link_pair(
-            _node<pair<FirstType, SecondType>> *tail, 
-            _node<pair<FirstType, SecondType>> *newNode)
-        {
-            tail->left->right = newNode;
-            newNode->left = tail->left;
-            newNode->right = tail;
-            tail->left = newNode;
-        }
         SecondType *util_initSecondType(bool forceInit) {
             return forceInit ? new SecondType {} : nullptr;
         }
@@ -463,9 +463,9 @@ namespace ds {
         Hash hash;
         Compare compare;
 
-        bool forceSecondTypeInit {false};
+        bool forceSecondTypeInit {stInit};
 
-        linkedlist_secondary linkedlist {this};
+        linkedlist_secondary<pair<FirstType, SecondType>> linkedlist {this};
 
         structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
         structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
@@ -476,7 +476,7 @@ namespace ds {
 
         class iterator {
 
-            friend linkedlist_secondary;
+            friend linkedlist_secondary<pair<FirstType, SecondType>>;
 
             private:
             structure<FirstType, SecondType, Hash, Compare> *primary;
@@ -605,7 +605,7 @@ namespace ds {
         };
     };
 
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::structure(
         _argv<FirstType> argv, 
         ull n, 
         const Hash &hash, 
@@ -623,9 +623,12 @@ namespace ds {
             st_baseHead->p = util_initSecondType(forceSecondTypeInit);
             st_baseTail = st_baseHead;
 
-            linkedlist.head = new _node<pair<FirstType, SecondType>> {};
-            linkedlist.head->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            linkedlist.tail->left = linkedlist.head;
+            pair_baseHead = new _node<pair<FirstType, SecondType>> {};
+            pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            pair_baseTail = pair_baseHead;
+
+            linkedlist.head = pair_baseHead;
+            linkedlist.refresh(pair_baseTail);
 
             ++i;
         }
@@ -638,9 +641,11 @@ namespace ds {
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             util_link(st_baseTail, rightNodeSecond);
 
-            _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
-            ll_node->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link_pair(linkedlist.tail, ll_node);
+            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
+            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(pair_baseTail, pairRightNode);
+
+            linkedlist.refresh(pair_baseTail);
         }
         for (; i < n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
@@ -651,14 +656,16 @@ namespace ds {
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             util_link(st_baseTail, rightNodeSecond);
 
-            _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
-            ll_node->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link_pair(linkedlist.tail, ll_node);
+            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
+            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(pair_baseTail, pairRightNode);
+
+            linkedlist.refresh(pair_baseTail);
         }
 
         size = argv.n > n ? argv.n : n;
     }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::structure(
         _argv<ipair<FirstType, SecondType>> argv, 
         ull n, 
         const Hash &hash, 
@@ -676,9 +683,12 @@ namespace ds {
             st_baseHead->p = argv.v[0]->second;
             st_baseTail = st_baseHead;
 
-            linkedlist.head = new _node<pair<FirstType, SecondType>> {};
-            linkedlist.head->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            linkedlist.tail->left = linkedlist.head;
+            pair_baseHead = new _node<pair<FirstType, SecondType>> {};
+            pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            pair_baseTail = pair_baseHead;
+
+            linkedlist.head = pair_baseHead;
+            linkedlist.refresh(pair_baseTail);
 
             ++i;
         }
@@ -691,9 +701,11 @@ namespace ds {
             rightNodeSecond->p = argv.v[i]->second;
             util_link(st_baseTail, rightNodeSecond);
 
-            _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
-            ll_node->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link_pair(linkedlist.tail, ll_node);
+            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
+            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(pair_baseTail, pairRightNode);
+
+            linkedlist.refresh(pair_baseTail);
         }
         for (; i < n; ++i) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
@@ -704,21 +716,23 @@ namespace ds {
             rightNodeSecond->p = util_initSecondType(forceSecondTypeInit);
             util_link(st_baseTail, rightNodeSecond);
 
-            _node<pair<FirstType, SecondType>> *ll_node {new _node<pair<FirstType, SecondType>> {}};
-            ll_node->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link_pair(linkedlist.tail, ll_node);
+            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
+            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(pair_baseTail, pairRightNode);
+
+            linkedlist.refresh(pair_baseTail);
         }
 
         size = argv.n > n ? argv.n : n;
     }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::structure(
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::structure(
         ull n, 
         const Hash &hash, 
         const Compare &compare
     ) {
         structure(args<FirstType>(), n, hash, compare);
     }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare>::~structure() {
+    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::~structure() {
         _node<FirstType> *ft_dnode {ft_baseHead};
         while (ft_dnode != nullptr) {
             delete ft_dnode->p;
@@ -735,13 +749,16 @@ namespace ds {
             delete tnode;
         }
 
-        _node<pair<FirstType, SecondType>> *ll_dnode {linkedlist.head};
-        while (ll_dnode != nullptr && ll_dnode != linkedlist.tail) {
-            delete ll_dnode->p;
-            _node<pair<FirstType, SecondType>> *tnode {ll_dnode};
-            ll_dnode = ll_dnode->right;
-            delete tnode;
+        _node<pair<FirstType, SecondType>> *pair_dnode {pair_baseHead};
+        if (pair_dnode != nullptr) {
+            while (pair_dnode != linkedlist.tail) {
+                delete pair_dnode->p;
+                _node<pair<FirstType, SecondType>> *tnode {pair_dnode};
+                pair_dnode = pair_dnode->right;
+                delete tnode;
+            }
         }
+
         delete linkedlist.tail;
     }
 
