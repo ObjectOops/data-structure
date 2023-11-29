@@ -6,7 +6,7 @@ int main() {
     ds::ipair<int, int> arguments [] {{1, 2}, {3, 4}, {5, 6}};
     ds::structure<int, int> test {ds::args(arguments)};
 
-    ds::structure<int, int>::iterator iter {};
+    ds::iterator<ds::pair<int, int>> iter {};
     
     try {
         iter.value();
