@@ -462,6 +462,47 @@ namespace ds {
         SecondType *util_initSecondType() {
             return stInit ? new SecondType {} : nullptr;
         }
+        void util_initStageOne(FirstType *v1, SecondType *v2) {
+            ft_baseHead = new _node<FirstType> {};
+            ft_baseHead->p = v1;
+            ft_baseTail = ft_baseHead;
+
+            st_baseHead = new _node<SecondType> {};
+            st_baseHead->p = v2;
+            st_baseTail = st_baseHead;
+
+            pair_baseHead = new _node<pair<FirstType, SecondType>> {};
+            pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            pair_baseTail = pair_baseHead;
+
+            linkedlist.head = pair_baseHead;
+            linkedlist.refresh(pair_baseTail);
+        }
+        void util_initStageTwo(FirstType *v1, SecondType *v2) {
+            _node<FirstType> *rightNode {new _node<FirstType> {}};
+            rightNode->p = v1;
+            util_link(ft_baseTail, rightNode);
+
+            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
+            rightNodeSecond->p = v2;
+            util_link(st_baseTail, rightNodeSecond);
+
+            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
+            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(pair_baseTail, pairRightNode);
+
+            linkedlist.refresh(pair_baseTail);
+        }
+        template<typename _nodeType>
+        void util_deallocInternal(_nodeType *head, void *stop) {
+            _nodeType *dnode {head};
+            while (dnode != stop) {
+                delete dnode->p;
+                _nodeType *tnode {dnode};
+                dnode = dnode->right;
+                delete tnode;
+            }
+        }
 
         public:
         Hash hash;
@@ -486,53 +527,15 @@ namespace ds {
         hash {hash}, compare {compare} 
     {
         ull i {};
-        if (argv.n > 0 && ft_baseHead == nullptr) {
-            ft_baseHead = new _node<FirstType> {};
-            ft_baseHead->p = new FirstType {*argv.v[0]};
-            ft_baseTail = ft_baseHead;
-
-            st_baseHead = new _node<SecondType> {};
-            st_baseHead->p = util_initSecondType();
-            st_baseTail = st_baseHead;
-
-            pair_baseHead = new _node<pair<FirstType, SecondType>> {};
-            pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            pair_baseTail = pair_baseHead;
-
-            linkedlist.head = pair_baseHead;
-            linkedlist.refresh(pair_baseTail);
-
+        if (argv.n > 0) {
+            util_initStageOne(new FirstType {*argv.v[0]}, util_initSecondType());
             ++i;
         }
         for (; i < argv.n; ++i) {
-            _node<FirstType> *rightNode {new _node<FirstType> {}};
-            rightNode->p = new FirstType {*argv.v[i]};
-            util_link(ft_baseTail, rightNode);
-
-            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
-            rightNodeSecond->p = util_initSecondType();
-            util_link(st_baseTail, rightNodeSecond);
-
-            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
-            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link(pair_baseTail, pairRightNode);
-
-            linkedlist.refresh(pair_baseTail);
+            util_initStageTwo(new FirstType {*argv.v[i]}, util_initSecondType());
         }
         for (; i < n; ++i) {
-            _node<FirstType> *rightNode {new _node<FirstType> {}};
-            rightNode->p = new FirstType {};
-            util_link(ft_baseTail, rightNode);
-
-            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
-            rightNodeSecond->p = util_initSecondType();
-            util_link(st_baseTail, rightNodeSecond);
-
-            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
-            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link(pair_baseTail, pairRightNode);
-
-            linkedlist.refresh(pair_baseTail);
+            util_initStageTwo(new FirstType {}, util_initSecondType());
         }
 
         size = argv.n > n ? argv.n : n;
@@ -546,53 +549,15 @@ namespace ds {
         hash {hash}, compare {compare} 
     {
         ull i {};
-        if (argv.n > 0 && ft_baseHead == nullptr) {
-            ft_baseHead = new _node<FirstType> {};
-            ft_baseHead->p = argv.v[0]->first;
-            ft_baseTail = ft_baseHead;
-
-            st_baseHead = new _node<SecondType> {};
-            st_baseHead->p = argv.v[0]->second;
-            st_baseTail = st_baseHead;
-
-            pair_baseHead = new _node<pair<FirstType, SecondType>> {};
-            pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            pair_baseTail = pair_baseHead;
-
-            linkedlist.head = pair_baseHead;
-            linkedlist.refresh(pair_baseTail);
-
+        if (argv.n > 0) {
+            util_initStageOne(argv.v[0]->first, argv.v[0]->second);
             ++i;
         }
         for (; i < argv.n; ++i) {
-            _node<FirstType> *rightNode {new _node<FirstType> {}};
-            rightNode->p = argv.v[i]->first;
-            util_link(ft_baseTail, rightNode);
-
-            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
-            rightNodeSecond->p = argv.v[i]->second;
-            util_link(st_baseTail, rightNodeSecond);
-
-            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
-            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link(pair_baseTail, pairRightNode);
-
-            linkedlist.refresh(pair_baseTail);
+            util_initStageTwo(argv.v[i]->first, argv.v[i]->second);
         }
         for (; i < n; ++i) {
-            _node<FirstType> *rightNode {new _node<FirstType> {}};
-            rightNode->p = new FirstType {};
-            util_link(ft_baseTail, rightNode);
-
-            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
-            rightNodeSecond->p = util_initSecondType();
-            util_link(st_baseTail, rightNodeSecond);
-
-            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
-            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link(pair_baseTail, pairRightNode);
-
-            linkedlist.refresh(pair_baseTail);
+            util_initStageTwo(new FirstType {}, util_initSecondType());
         }
 
         size = argv.n > n ? argv.n : n;
@@ -605,30 +570,11 @@ namespace ds {
         structure(args<FirstType>(), n, hash, compare);
     }
     FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::~structure() {
-        _node<FirstType> *ft_dnode {ft_baseHead};
-        while (ft_dnode != nullptr) {
-            delete ft_dnode->p;
-            _node<FirstType> *tnode {ft_dnode};
-            ft_dnode = ft_dnode->right;
-            delete tnode;
-        }
+        util_deallocInternal(ft_baseHead, nullptr);
+        util_deallocInternal(st_baseHead, nullptr);
 
-        _node<SecondType> *st_dnode {st_baseHead};
-        while (st_dnode != nullptr) {
-            delete st_dnode->p;
-            _node<SecondType> *tnode {st_dnode};
-            st_dnode = st_dnode->right;
-            delete tnode;
-        }
-
-        _node<pair<FirstType, SecondType>> *pair_dnode {pair_baseHead};
-        if (pair_dnode != nullptr) {
-            while (pair_dnode != linkedlist.tail) {
-                delete pair_dnode->p;
-                _node<pair<FirstType, SecondType>> *tnode {pair_dnode};
-                pair_dnode = pair_dnode->right;
-                delete tnode;
-            }
+        if (pair_baseHead != nullptr) {
+            util_deallocInternal(pair_baseHead, linkedlist.tail);
         }
 
         delete linkedlist.tail;
@@ -693,7 +639,6 @@ namespace ds {
         const Type &operator*() const {
             return const_cast<iterator<Type> *>(this)->operator*();
         }
-
 
         bool hasNext() const {
             test_node_ptr();
