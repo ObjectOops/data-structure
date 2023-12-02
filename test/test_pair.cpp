@@ -12,7 +12,7 @@ int main() {
     assert(test2.first() == ds::str {"test"} && test2.second() == 32);
 
     ds::structure<int, int> s {ds::args<int>(1, 2, 3)};
-    auto iter {s.linkedlist.begin()};
+    auto iter {s.pairll.begin()};
     assert(!iter.value().secondExists());
     try {
         iter.value().second();

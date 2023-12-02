@@ -475,8 +475,8 @@ namespace ds {
             pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
             pair_baseTail = pair_baseHead;
 
-            linkedlist.head = pair_baseHead;
-            linkedlist.refresh(pair_baseTail);
+            pairll.head = pair_baseHead;
+            pairll.refresh(pair_baseTail);
         }
         void util_initStageTwo(FirstType *v1, SecondType *v2) {
             _node<FirstType> *rightNode {new _node<FirstType> {}};
@@ -491,7 +491,7 @@ namespace ds {
             pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
             util_link(pair_baseTail, pairRightNode);
 
-            linkedlist.refresh(pair_baseTail);
+            pairll.refresh(pair_baseTail);
         }
         template<typename _nodeType>
         void util_deallocInternal(_nodeType *head, void *stop) {
@@ -508,7 +508,9 @@ namespace ds {
         Hash hash;
         Compare compare;
 
-        linkedlist_secondary<pair<FirstType, SecondType>> linkedlist {this};
+        linkedlist_secondary<FirstType> ftll {this};
+        linkedlist_secondary<SecondType> stll {this};
+        linkedlist_secondary<pair<FirstType, SecondType>> pairll {this};
 
         structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
         structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
@@ -574,10 +576,12 @@ namespace ds {
         util_deallocInternal(st_baseHead, nullptr);
 
         if (pair_baseHead != nullptr) {
-            util_deallocInternal(pair_baseHead, linkedlist.tail);
+            util_deallocInternal(pair_baseHead, pairll.tail);
         }
 
-        delete linkedlist.tail;
+        delete ftll.tail;
+        delete stll.tail;
+        delete pairll.tail;
     }
 
     // Iterator over an instance of structure.

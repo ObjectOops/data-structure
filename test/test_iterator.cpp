@@ -51,7 +51,7 @@ int main() {
     } catch (ds::exception::null_access &e) {
     }
 
-    iter = test.linkedlist.begin();
+    iter = test.pairll.begin();
     assert(iter.hasNext());
     assert(!iter.hasPrev());
 
@@ -65,10 +65,10 @@ int main() {
     assert(iter.value().second() == 6);
 
     assert(iter.hasNext());
-    assert(++iter == test.linkedlist.end());
+    assert(++iter == test.pairll.end());
     assert(!iter.hasNext());
 
-    iter = test.linkedlist.end();
+    iter = test.pairll.end();
 
     assert(iter.hasPrev());
     assert(!iter.hasNext());
