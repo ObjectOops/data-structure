@@ -1,8 +1,8 @@
 #ifndef DATA_STRUCTURE_HPP
 #define DATA_STRUCTURE_HPP
 
-#include <string.h>
 #include <malloc.h>
+#include <string.h>
 
 // Specifies to use a function pointer to the hash function for type `T`.
 #define dhash_t(T) ds::ull (*) (const T &)
@@ -27,6 +27,10 @@ template<\
     bool stInit \
 >
 
+#define TYPE_CLASS structure<FirstType, SecondType, Hash, Compare, stInit>
+#define TYPE_TEMPLATE FUNC_TEMPLATE TYPE_CLASS
+#define TYPE_TEMPLATE_LL FUNC_TEMPLATE template<typename _LLT> TYPE_CLASS::linkedlist_secondary<_LLT>
+
 // `DEFAULT_HASH` and `DEFAULT_COMPARE` are used internally to create default definitions 
 // for primitive types `PT`.
 
@@ -46,20 +50,7 @@ namespace ds {
 
     typedef unsigned long long ull;
 
-    // Extra utilities.
-    namespace util {
-
-        // Indicates that `Type` and `OtherType` are not the same at compile-time.
-        template<typename Type, typename OtherType>
-        struct same_type {
-            static constexpr bool result = false;
-        };
-        // Indicates that `Type` and `Type` are the same at compile-time.
-        template<typename Type>
-        struct same_type<Type, Type> {
-            static constexpr bool result = true;
-        };
-    }
+    // Begin Preceding Definitions ====================================
 
     // Throwing exceptions from `ds::exception` are for internal use only!
     namespace exception {
@@ -234,7 +225,28 @@ namespace ds {
         }
     };
 
-    // Prototypes.
+    // End Preceding Definitions ======================================
+
+    // Begin Forward Declarations =====================================
+
+    template<typename T1, typename T2>
+    struct ipair;
+
+    template<typename T>
+    struct _argv;
+
+    template<typename Type, typename ...Types>
+    _argv<Type> args(const Types &...);
+
+    template<typename Type>
+    struct _node;
+
+    template<typename Type1, typename Type2>
+    class pair;
+
+    template<typename Type>
+    class iterator;
+
     // The class templates require the default hash and comparison functions 
     // to take all parameters by reference, including primitive types.
 
@@ -243,6 +255,193 @@ namespace ds {
 
     template<typename Type>
     bool default_compare(const Type &, const Type &);
+
+    // End Forward Declarations =======================================
+
+    // The Data Structure.
+    CLASS_TEMPLATE class structure {
+
+        private:
+        _node<FirstType> *ft_baseHead {nullptr}, *ft_baseTail {nullptr};
+        _node<SecondType> *st_baseHead {nullptr}, *st_baseTail {nullptr};
+        _node<pair<FirstType, SecondType>> *pair_baseHead {nullptr}, *pair_baseTail {nullptr};
+        ull size {};
+
+        struct _cmd {
+            enum TYPE {INSERT, REMOVE};
+            TYPE type;
+            ull data;
+        };
+        _node<_cmd> *cmd_head {nullptr}, *cmd_tail {nullptr};
+
+        struct secondary {
+
+            protected:
+            TYPE_CLASS *primary;
+        };
+
+        template<typename _LLT>
+        struct linkedlist_secondary : public secondary {
+
+            friend class structure;
+            
+            private:
+            _node<_LLT> *head {nullptr};
+            _node<_LLT> *tail {new _node<_LLT> {}};
+
+            linkedlist_secondary(TYPE_CLASS *);
+
+            void refresh(_node<_LLT> *node) {
+                tail->left = node;
+                node->right = tail;
+            }
+
+            public:
+            iterator<pair<FirstType, SecondType>> begin() const {
+                return iterator<pair<FirstType, SecondType>> {secondary::primary, head};
+            }
+
+            iterator<pair<FirstType, SecondType>> end() const {
+                return iterator<pair<FirstType, SecondType>> {secondary::primary, tail};
+            }
+        };
+
+        template<typename _nodeType>
+        void util_link(_nodeType *&tail, _nodeType *&newNode) { // `tail` must be by reference.
+            newNode->left = tail;
+            tail->right = newNode;
+            tail = newNode;
+        }
+        SecondType *util_initSecondType() {
+            return stInit ? new SecondType {} : nullptr;
+        }
+        void util_initStageOne(FirstType *v1, SecondType *v2) {
+            ft_baseHead = new _node<FirstType> {};
+            ft_baseHead->p = v1;
+            ft_baseTail = ft_baseHead;
+
+            st_baseHead = new _node<SecondType> {};
+            st_baseHead->p = v2;
+            st_baseTail = st_baseHead;
+
+            pair_baseHead = new _node<pair<FirstType, SecondType>> {};
+            pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            pair_baseTail = pair_baseHead;
+
+            pairll.head = pair_baseHead;
+            pairll.refresh(pair_baseTail);
+        }
+        void util_initStageTwo(FirstType *v1, SecondType *v2) {
+            _node<FirstType> *rightNode {new _node<FirstType> {}};
+            rightNode->p = v1;
+            util_link(ft_baseTail, rightNode);
+
+            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
+            rightNodeSecond->p = v2;
+            util_link(st_baseTail, rightNodeSecond);
+
+            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
+            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
+            util_link(pair_baseTail, pairRightNode);
+
+            pairll.refresh(pair_baseTail);
+        }
+        template<typename _nodeType>
+        void util_deallocInternal(_nodeType *head, void *stop) {
+            _nodeType *dnode {head};
+            while (dnode != stop) {
+                delete dnode->p;
+                _nodeType *tnode {dnode};
+                dnode = dnode->right;
+                delete tnode;
+            }
+        }
+
+        public:
+        Hash hash;
+        Compare compare;
+
+        linkedlist_secondary<FirstType> ftll {this};
+        linkedlist_secondary<SecondType> stll {this};
+        linkedlist_secondary<pair<FirstType, SecondType>> pairll {this};
+
+        structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
+        structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
+        structure(ull, const Hash &hash = default_hash, const Compare &compare = default_compare);
+        structure(const TYPE_CLASS &other);
+        structure(const TYPE_CLASS &&other) noexcept;
+        ~structure();
+    };
+
+    TYPE_TEMPLATE::structure(
+        _argv<FirstType> argv, 
+        ull n, 
+        const Hash &hash, 
+        const Compare &compare
+    ) : 
+        hash {hash}, compare {compare} 
+    {
+        ull i {};
+        if (argv.n > 0) {
+            util_initStageOne(new FirstType {*argv.v[0]}, util_initSecondType());
+            ++i;
+        }
+        for (; i < argv.n; ++i) {
+            util_initStageTwo(new FirstType {*argv.v[i]}, util_initSecondType());
+        }
+        for (; i < n; ++i) {
+            util_initStageTwo(new FirstType {}, util_initSecondType());
+        }
+
+        size = argv.n > n ? argv.n : n;
+    }
+    TYPE_TEMPLATE::structure(
+        _argv<ipair<FirstType, SecondType>> argv, 
+        ull n, 
+        const Hash &hash, 
+        const Compare &compare
+    ) : 
+        hash {hash}, compare {compare} 
+    {
+        ull i {};
+        if (argv.n > 0) {
+            util_initStageOne(argv.v[0]->first, argv.v[0]->second);
+            ++i;
+        }
+        for (; i < argv.n; ++i) {
+            util_initStageTwo(argv.v[i]->first, argv.v[i]->second);
+        }
+        for (; i < n; ++i) {
+            util_initStageTwo(new FirstType {}, util_initSecondType());
+        }
+
+        size = argv.n > n ? argv.n : n;
+    }
+    TYPE_TEMPLATE::structure(
+        ull n, 
+        const Hash &hash, 
+        const Compare &compare
+    ) {
+        structure(args<FirstType>(), n, hash, compare);
+    }
+    TYPE_TEMPLATE::~structure() {
+        util_deallocInternal(ft_baseHead, nullptr);
+        util_deallocInternal(st_baseHead, nullptr);
+
+        if (pair_baseHead != nullptr) {
+            util_deallocInternal(pair_baseHead, pairll.tail);
+        }
+
+        delete ftll.tail;
+        delete stll.tail;
+        delete pairll.tail;
+    }
+
+    TYPE_TEMPLATE_LL::linkedlist_secondary(
+        TYPE_CLASS *p
+    ) {
+        secondary::primary = p;
+    }
 
     // Initialization pair. Make an array of these to initialize values to pass to `args`.
     template<typename T1, typename T2>
@@ -399,190 +598,6 @@ namespace ds {
             return n2->p != nullptr;
         }
     };
-
-    template<typename Type>
-    class iterator; // Class prototype;
-    
-    // The Data Structure.
-    CLASS_TEMPLATE class structure {
-
-        private:
-        _node<FirstType> *ft_baseHead {nullptr}, *ft_baseTail {nullptr};
-        _node<SecondType> *st_baseHead {nullptr}, *st_baseTail {nullptr};
-        _node<pair<FirstType, SecondType>> *pair_baseHead {nullptr}, *pair_baseTail {nullptr};
-        ull size {};
-
-        struct _cmd {
-            enum TYPE {INSERT, REMOVE};
-            TYPE type;
-            ull data;
-        };
-        _node<_cmd> *cmd_head {nullptr}, *cmd_tail {nullptr};
-
-        struct secondary {
-
-            protected:
-            structure<FirstType, SecondType, Hash, Compare, stInit> *primary;
-        };
-
-        template<typename _LLT>
-        struct linkedlist_secondary : public secondary {
-
-            friend class structure;
-            
-            private:
-            _node<_LLT> *head {nullptr};
-            _node<_LLT> *tail {new _node<_LLT> {}};
-
-            linkedlist_secondary(structure<FirstType, SecondType, Hash, Compare, stInit> *p) {
-                secondary::primary = p;
-            }
-
-            void refresh(_node<_LLT> *node) {
-                tail->left = node;
-                node->right = tail;
-            }
-
-            public:
-            iterator<pair<FirstType, SecondType>> begin() const {
-                return iterator<pair<FirstType, SecondType>> {secondary::primary, head};
-            }
-
-            iterator<pair<FirstType, SecondType>> end() const {
-                return iterator<pair<FirstType, SecondType>> {secondary::primary, tail};
-            }
-        };
-
-        template<typename _nodeType>
-        void util_link(_nodeType *&tail, _nodeType *&newNode) { // `tail` must be by reference.
-            newNode->left = tail;
-            tail->right = newNode;
-            tail = newNode;
-        }
-        SecondType *util_initSecondType() {
-            return stInit ? new SecondType {} : nullptr;
-        }
-        void util_initStageOne(FirstType *v1, SecondType *v2) {
-            ft_baseHead = new _node<FirstType> {};
-            ft_baseHead->p = v1;
-            ft_baseTail = ft_baseHead;
-
-            st_baseHead = new _node<SecondType> {};
-            st_baseHead->p = v2;
-            st_baseTail = st_baseHead;
-
-            pair_baseHead = new _node<pair<FirstType, SecondType>> {};
-            pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            pair_baseTail = pair_baseHead;
-
-            pairll.head = pair_baseHead;
-            pairll.refresh(pair_baseTail);
-        }
-        void util_initStageTwo(FirstType *v1, SecondType *v2) {
-            _node<FirstType> *rightNode {new _node<FirstType> {}};
-            rightNode->p = v1;
-            util_link(ft_baseTail, rightNode);
-
-            _node<SecondType> *rightNodeSecond {new _node<SecondType> {}};
-            rightNodeSecond->p = v2;
-            util_link(st_baseTail, rightNodeSecond);
-
-            _node<pair<FirstType, SecondType>> *pairRightNode {new _node<pair<FirstType, SecondType>> {}};
-            pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
-            util_link(pair_baseTail, pairRightNode);
-
-            pairll.refresh(pair_baseTail);
-        }
-        template<typename _nodeType>
-        void util_deallocInternal(_nodeType *head, void *stop) {
-            _nodeType *dnode {head};
-            while (dnode != stop) {
-                delete dnode->p;
-                _nodeType *tnode {dnode};
-                dnode = dnode->right;
-                delete tnode;
-            }
-        }
-
-        public:
-        Hash hash;
-        Compare compare;
-
-        linkedlist_secondary<FirstType> ftll {this};
-        linkedlist_secondary<SecondType> stll {this};
-        linkedlist_secondary<pair<FirstType, SecondType>> pairll {this};
-
-        structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
-        structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
-        structure(ull, const Hash &hash = default_hash, const Compare &compare = default_compare);
-        structure(const structure<FirstType, SecondType, Hash, Compare, stInit> &other);
-        structure(const structure<FirstType, SecondType, Hash, Compare, stInit> &&other) noexcept;
-        ~structure();
-    };
-
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::structure(
-        _argv<FirstType> argv, 
-        ull n, 
-        const Hash &hash, 
-        const Compare &compare
-    ) : 
-        hash {hash}, compare {compare} 
-    {
-        ull i {};
-        if (argv.n > 0) {
-            util_initStageOne(new FirstType {*argv.v[0]}, util_initSecondType());
-            ++i;
-        }
-        for (; i < argv.n; ++i) {
-            util_initStageTwo(new FirstType {*argv.v[i]}, util_initSecondType());
-        }
-        for (; i < n; ++i) {
-            util_initStageTwo(new FirstType {}, util_initSecondType());
-        }
-
-        size = argv.n > n ? argv.n : n;
-    }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::structure(
-        _argv<ipair<FirstType, SecondType>> argv, 
-        ull n, 
-        const Hash &hash, 
-        const Compare &compare
-    ) : 
-        hash {hash}, compare {compare} 
-    {
-        ull i {};
-        if (argv.n > 0) {
-            util_initStageOne(argv.v[0]->first, argv.v[0]->second);
-            ++i;
-        }
-        for (; i < argv.n; ++i) {
-            util_initStageTwo(argv.v[i]->first, argv.v[i]->second);
-        }
-        for (; i < n; ++i) {
-            util_initStageTwo(new FirstType {}, util_initSecondType());
-        }
-
-        size = argv.n > n ? argv.n : n;
-    }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::structure(
-        ull n, 
-        const Hash &hash, 
-        const Compare &compare
-    ) {
-        structure(args<FirstType>(), n, hash, compare);
-    }
-    FUNC_TEMPLATE structure<FirstType, SecondType, Hash, Compare, stInit>::~structure() {
-        util_deallocInternal(ft_baseHead, nullptr);
-        util_deallocInternal(st_baseHead, nullptr);
-
-        if (pair_baseHead != nullptr) {
-            util_deallocInternal(pair_baseHead, pairll.tail);
-        }
-
-        delete ftll.tail;
-        delete stll.tail;
-        delete pairll.tail;
-    }
 
     // Iterator over an instance of structure.
     // `Type` can be equivalent to one of the following: `FirstType`, `SecondType`, or `pair<FirstType, SecondType`.
@@ -790,6 +805,21 @@ Previous element does not exist. (*this)-- is invalid.)"
     DEFAULT_COMPARE(char16_t)
     DEFAULT_COMPARE(char32_t)
     DEFAULT_COMPARE(bool)
+
+    // Extra utilities.
+    namespace util {
+
+        // Indicates that `Type` and `OtherType` are not the same at compile-time.
+        template<typename Type, typename OtherType>
+        struct same_type {
+            static constexpr bool result = false;
+        };
+        // Indicates that `Type` and `Type` are the same at compile-time.
+        template<typename Type>
+        struct same_type<Type, Type> {
+            static constexpr bool result = true;
+        };
+    }
 }
 
 #undef CLASS_TEMPLATE
