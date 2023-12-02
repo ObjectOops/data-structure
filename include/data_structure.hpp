@@ -639,6 +639,12 @@ namespace ds {
         const Type &operator*() const {
             return const_cast<iterator<Type> *>(this)->operator*();
         }
+        Type *operator->() {
+            return &this->operator*();
+        }
+        const Type *operator->() const {
+            return const_cast<iterator<Type> *>(this)->operator->();
+        }
 
         bool hasNext() const {
             test_node_ptr();
