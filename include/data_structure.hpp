@@ -28,8 +28,10 @@ template<\
 >
 
 #define TYPE_CLASS structure<FirstType, SecondType, Hash, Compare, stInit>
-#define TYPE_TEMPLATE(RET) FUNC_TEMPLATE RET TYPE_CLASS
-#define TYPE_TEMPLATE_LL(RET) FUNC_TEMPLATE template<typename _LLT> RET TYPE_CLASS::linkedlist_secondary<_LLT>
+#define STRUCTURE(RET) FUNC_TEMPLATE RET TYPE_CLASS
+#define LL(RET) FUNC_TEMPLATE template<typename _LLT> RET TYPE_CLASS::linkedlist_secondary<_LLT>
+#define PAIR(RET) template<typename Type1, typename Type2> RET pair<Type1, Type2>
+#define ITER(RET) template<typename Type> RET iterator<Type>
 
 // `DEFAULT_HASH` and `DEFAULT_COMPARE` are used internally to create default definitions 
 // for primitive types `PT`.
@@ -63,58 +65,71 @@ namespace ds {
 
             public:
             base(
-                const char *exceptionName = "ds::base unnamed exception", 
-                const char *content = "An exception was thrown.", 
-                bool selfDestruct = false, 
-                const char *separator = ":\n\t"
-            ) {
-                ull size {strlen(exceptionName) + strlen(separator) + strlen(content) + 1};
-                this->msg = new char [size];
-                snprintf(this->msg, size, "%s%s%s", exceptionName, separator, content);
-                
-                // Delete `content` if allocated with new. May change later.
-                if (selfDestruct) {
-                    delete[] content;
-                }
-            }
-            base(const base &other) {
-                ull size {strlen(other.msg) + 1};
-                this->msg = new char [size];
-                memcpy(msg, other.msg, size);
-                this->msg[size - 1] = '\0';
-            }
-            base(base &&other) noexcept {
-                this->msg = other.msg;
-                other.msg = nullptr;
-            }
-            ~base() {
-                delete[] msg;
-            }
+                const char * = "ds::base unnamed exception", 
+                const char * = "An exception was thrown.", 
+                bool = false, 
+                const char * = ":\n\t"
+            );
+            base(const base &);
+            base(base &&) noexcept;
+            ~base();
 
-            const char *what() const noexcept {
-                return msg;
-            }
+            const char *what() const noexcept;
         };
+        base::base(
+            const char *exceptionName, 
+            const char *content, 
+            bool selfDestruct, 
+            const char *separator
+        ) {
+            ull size {strlen(exceptionName) + strlen(separator) + strlen(content) + 1};
+            this->msg = new char [size];
+            snprintf(this->msg, size, "%s%s%s", exceptionName, separator, content);
+            
+            // Delete `content` if allocated with new. May change later.
+            if (selfDestruct) {
+                delete[] content;
+            }
+        }
+        base::base(const base &other) {
+            ull size {strlen(other.msg) + 1};
+            this->msg = new char [size];
+            memcpy(msg, other.msg, size);
+            this->msg[size - 1] = '\0';
+        }
+        base::base(base &&other) noexcept {
+            this->msg = other.msg;
+            other.msg = nullptr;
+        }
+        base::~base() {
+            delete[] msg;
+        }
+
+        const char *base::what() const noexcept {
+            return msg;
+        }
 
         // Out-of-bounds exception.
         struct out_of_bounds : public base {
 
             public:
-            out_of_bounds(const char *msg, bool selfDestruct = false) : 
-                base {"ds::out_of_bounds exception", msg, selfDestruct} 
-            {
-            }
+            out_of_bounds(const char *, bool = false);
         };
+        out_of_bounds::out_of_bounds(const char *msg, bool selfDestruct) : 
+            base {"ds::out_of_bounds exception", msg, selfDestruct} 
+        {
+        }
 
         // Null / invalid data access exception.
         struct null_access : public base {
 
             public:
-            null_access(const char *msg) : 
-                base {"ds::null_access exception", msg, false} 
-            {
-            }
+            null_access(const char *);
         };
+        null_access::null_access(const char *msg) : 
+            base {"ds::null_access exception", msg, false} 
+        {
+        }
     }
 
     // Basic string class.
@@ -125,105 +140,114 @@ namespace ds {
         ull len;
 
         // Constructor for internal use.
-        str(char *s, ull len) : s {s}, len {len} {
-        }
+        str(char *, ull);
         
         public:
-        str(const char *src) {
-            this->len = strlen(src);
-            this->s = new char [this->len + 1];
-            memcpy(this->s, src, len);
-            this->s[len] = '\0';
-        }
-        str(const str &obj) : str {obj.s} {
-        }
-        str(str &&obj) noexcept {
-            this->s = obj.s;
-            this->len = obj.len;
-            obj.s = nullptr;
-            obj.len = 0;
-        }
-        str() : str {""} {
-        }
-        ~str() {
-            delete[] s;
-        }
-
-        ull length() const noexcept {
-            return len;
-        }
-
-        str substr(ull start, ull end) const {
-            start = start < len ? start : len;
-            end = end < len ? end : len;
-            ull len = end - start;
-
-            char *buffer {new char [len + 1]};
-            memcpy(buffer, s + start, len);
-            buffer[len] = '\0';
-
-            return str {buffer, len};
-        }
-
-        const char *cstr() const noexcept {
-            return s;
-        }
-
-        char &operator[](ull index) {
-            if (index >= len) {
-                ull size {128};
-                char *msg {new char [size]};
-                snprintf(
-                    msg, 
-                    size, 
-                    "ds::str string access at index %llu with length %llu.", 
-                    index, 
-                    len
-                );
-                throw exception::out_of_bounds {msg, true};
-            }
-            return s[index];
-        }
-        char operator[](ull index) const {
-            return const_cast<str *>(this)->operator[](index);
-        }
-
-        str &operator=(const str &other) {
-            delete[] s;
-            s = new char [other.len + 1];
-            memcpy(s, other.s, other.len);
-            s[other.len] = '\0';
-            len = other.len;
-            return *this;
-        }
-        str &operator=(str &&other) {
-            delete[] this->s;
-            this->s = other.s;
-            this->len = other.len;
-            other.s = nullptr;
-            other.len = 0;
-            return *this;
-        }
-
-        str operator+(const str &other) const {
-            ull size = len + other.len + 1;
-            char *buffer {new char [size]};
-
-            memcpy(buffer, s, len);
-            memcpy(buffer + len, other.s, other.len);
-            buffer[size - 1] = '\0';
-
-            return str {buffer, size - 1};
-        }
-
-        str &operator+=(const str &other) {
-            return operator=(operator+(other));
-        }
-
-        bool operator==(const str &other) const noexcept {
-            return strncmp(s, other.s, len < other.len ? other.len : len) == 0;
-        }
+        str(const char *);
+        str(const str &);
+        str(str &&) noexcept;
+        str();
+        ~str();
+        ull length() const noexcept;
+        str substr(ull, ull) const;
+        const char *cstr() const noexcept;
+        char &operator[](ull);
+        char operator[](ull) const;
+        str &operator=(const str &);
+        str &operator=(str &&);
+        str operator+(const str &) const;
+        str &operator+=(const str &);
+        bool operator==(const str &) const noexcept;
     };
+    // Constructor for internal use.
+    str::str(char *s, ull len) : s {s}, len {len} {
+    }
+    str::str(const char *src) {
+        this->len = strlen(src);
+        this->s = new char [this->len + 1];
+        memcpy(this->s, src, len);
+        this->s[len] = '\0';
+    }
+    str::str(const str &obj) : str {obj.s} {
+    }
+    str::str(str &&obj) noexcept {
+        this->s = obj.s;
+        this->len = obj.len;
+        obj.s = nullptr;
+        obj.len = 0;
+    }
+    str::str() : str {""} {
+    }
+    str::~str() {
+        delete[] s;
+    }
+    ull str::length() const noexcept {
+        return len;
+    }
+    str str::substr(ull start, ull end) const {
+        start = start < len ? start : len;
+        end = end < len ? end : len;
+        ull len = end - start;
+
+        char *buffer {new char [len + 1]};
+        memcpy(buffer, s + start, len);
+        buffer[len] = '\0';
+
+        return str {buffer, len};
+    }
+    const char *str::cstr() const noexcept {
+        return s;
+    }
+    char &str::operator[](ull index) {
+        if (index >= len) {
+            ull size {128};
+            char *msg {new char [size]};
+            snprintf(
+                msg, 
+                size, 
+                "ds::str string access at index %llu with length %llu.", 
+                index, 
+                len
+            );
+            throw exception::out_of_bounds {msg, true};
+        }
+        return s[index];
+    }
+    char str::operator[](ull index) const {
+        return const_cast<str *>(this)->operator[](index);
+    }
+    str &str::operator=(const str &other) {
+        delete[] s;
+        s = new char [other.len + 1];
+        memcpy(s, other.s, other.len);
+        s[other.len] = '\0';
+        len = other.len;
+        return *this;
+    }
+    str &str::operator=(str &&other) {
+        delete[] this->s;
+        this->s = other.s;
+        this->len = other.len;
+        other.s = nullptr;
+        other.len = 0;
+        return *this;
+    }
+    str str::operator+(const str &other) const {
+        ull size = len + other.len + 1;
+        char *buffer {new char [size]};
+
+        memcpy(buffer, s, len);
+        memcpy(buffer + len, other.s, other.len);
+        buffer[size - 1] = '\0';
+
+        return str {buffer, size - 1};
+    }
+    str &str::operator+=(const str &other) {
+        return operator=(operator+(other));
+    }
+    bool str::operator==(const str &other) const noexcept {
+        return strncmp(s, other.s, len < other.len ? other.len : len) == 0;
+    }
 
     // End Preceding Definitions ======================================
 
@@ -314,11 +338,11 @@ namespace ds {
         linkedlist_secondary<SecondType> stll {this};
         linkedlist_secondary<pair<FirstType, SecondType>> pairll {this};
 
-        structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
-        structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash &hash = default_hash, const Compare &compare = default_compare);
-        structure(ull, const Hash &hash = default_hash, const Compare &compare = default_compare);
-        structure(const TYPE_CLASS &other);
-        structure(const TYPE_CLASS &&other) noexcept;
+        structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash & = default_hash, const Compare & = default_compare);
+        structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash & = default_hash, const Compare & = default_compare);
+        structure(ull, const Hash & = default_hash, const Compare & = default_compare);
+        structure(const TYPE_CLASS &);
+        structure(const TYPE_CLASS &&) noexcept;
         ~structure();
     };
 
@@ -326,7 +350,7 @@ namespace ds {
 
     // Private
 
-    TYPE_TEMPLATE()::structure(
+    STRUCTURE()::structure(
         _argv<FirstType> argv, 
         ull n, 
         const Hash &hash, 
@@ -348,7 +372,7 @@ namespace ds {
 
         size = argv.n > n ? argv.n : n;
     }
-    TYPE_TEMPLATE()::structure(
+    STRUCTURE()::structure(
         _argv<ipair<FirstType, SecondType>> argv, 
         ull n, 
         const Hash &hash, 
@@ -370,14 +394,14 @@ namespace ds {
 
         size = argv.n > n ? argv.n : n;
     }
-    TYPE_TEMPLATE()::structure(
+    STRUCTURE()::structure(
         ull n, 
         const Hash &hash, 
         const Compare &compare
     ) {
         structure(args<FirstType>(), n, hash, compare);
     }
-    TYPE_TEMPLATE()::~structure() {
+    STRUCTURE()::~structure() {
         util_deallocInternal(ft_baseHead, nullptr);
         util_deallocInternal(st_baseHead, nullptr);
 
@@ -390,17 +414,17 @@ namespace ds {
         delete pairll.tail;
     }
 
-    TYPE_TEMPLATE(template<typename _nodeType> void)::util_link(
+    STRUCTURE(template<typename _nodeType> void)::util_link(
         _nodeType *&tail, _nodeType *&newNode // `tail` must be by reference.
     ) {
         newNode->left = tail;
         tail->right = newNode;
         tail = newNode;
     }
-    TYPE_TEMPLATE(SecondType *)::util_initSecondType() {
+    STRUCTURE(SecondType *)::util_initSecondType() {
         return stInit ? new SecondType {} : nullptr;
     }
-    TYPE_TEMPLATE(void)::util_initStageOne(FirstType *v1, SecondType *v2) {
+    STRUCTURE(void)::util_initStageOne(FirstType *v1, SecondType *v2) {
         ft_baseHead = new _node<FirstType> {};
         ft_baseHead->p = v1;
         ft_baseTail = ft_baseHead;
@@ -416,7 +440,7 @@ namespace ds {
         pairll.head = pair_baseHead;
         pairll.refresh(pair_baseTail);
     }
-    TYPE_TEMPLATE(void)::util_initStageTwo(FirstType *v1, SecondType *v2) {
+    STRUCTURE(void)::util_initStageTwo(FirstType *v1, SecondType *v2) {
         _node<FirstType> *rightNode {new _node<FirstType> {}};
         rightNode->p = v1;
         util_link(ft_baseTail, rightNode);
@@ -431,7 +455,7 @@ namespace ds {
 
         pairll.refresh(pair_baseTail);
     }
-    TYPE_TEMPLATE(template<typename _nodeType> void)::util_deallocInternal(
+    STRUCTURE(template<typename _nodeType> void)::util_deallocInternal(
         _nodeType *head, void *stop
     ) {
         _nodeType *dnode {head};
@@ -451,22 +475,22 @@ namespace ds {
 
     // Private
 
-    TYPE_TEMPLATE_LL()::linkedlist_secondary(
+    LL()::linkedlist_secondary(
         TYPE_CLASS *p
     ) {
         secondary::primary = p;
     }
-    TYPE_TEMPLATE_LL(void)::refresh(_node<_LLT> *node) {
+    LL(void)::refresh(_node<_LLT> *node) {
         tail->left = node;
         node->right = tail;
     }
 
     // Public
 
-    TYPE_TEMPLATE_LL(iterator<_LLT>)::begin() const {
+    LL(iterator<_LLT>)::begin() const {
         return iterator<_LLT> {secondary::primary, head};
     }
-    TYPE_TEMPLATE_LL(iterator<_LLT>)::end() const {
+    LL(iterator<_LLT>)::end() const {
         return iterator<_LLT> {secondary::primary, tail};
     }
 
@@ -484,11 +508,13 @@ namespace ds {
         T2 *second;
 
         public:
-        ipair(const T1 &first, const T2 &second) : 
-            first {new T1 {first}}, second {new T2 {second}} 
-        {
-        }
+        ipair(const T1 &, const T2 &);
     };
+    template<typename T1, typename T2>
+    ipair<T1, T2>::ipair(const T1 &first, const T2 &second) : 
+        first {new T1 {first}}, second {new T2 {second}} 
+    {
+    }
 
     // Internal use only! For passing results from `args` to `structure` constructors.
     template<typename T>
@@ -506,14 +532,18 @@ namespace ds {
         private:
         const T **v;
         ull n;
-        _argv(const T **v, ull n) : v {v}, n {n} {
-        }
+        _argv(const T **, ull);
 
         public:
-        ~_argv() {
-            delete[] v;
-        }
+        ~_argv();
     };
+    template<typename T>
+    _argv<T>::_argv(const T **v, ull n) : v {v}, n {n} {
+    }
+    template<typename T>
+    _argv<T>::~_argv() {
+        delete[] v;
+    }
 
     // Array-style initialization.
     template<typename Type, typename ...Types>
@@ -552,9 +582,11 @@ namespace ds {
         Type *p {nullptr};
         _node<Type> *left {nullptr}, *right {nullptr};
 
-        _node() {
-        }
+        _node();
     };
+    template<typename Type>
+    _node<Type>::_node() {
+    }
 
     // Pair type.
     // Important: The second value may not be initialized. Check availability with `secondExists()`.
@@ -570,63 +602,73 @@ namespace ds {
 
         bool ref; // true --> don't delete on destruction, false --> delete on destruction
 
-        pair(_node<Type1> *n1, _node<Type2> *n2) : n1 {n1}, n2 {n2}, ref {true} {
-        }
+        pair(_node<Type1> *, _node<Type2> *);
 
         public:
-        pair(const Type1 &first, const Type2 &second) : ref {false} {
-            n1 = new _node<Type1> {};
-            n2 = new _node<Type2> {};
-            n1->p = new Type1 {first};
-            n2->p = new Type2 {second};
-        }
-        pair(const Type1 &first) : ref {false} {
-            n1 = new _node<Type1> {};
-            n2 = new _node<Type2> {};
-            n1->p = new Type1 {first};
-            n2->p = nullptr;
-        }
-        pair() : pair(Type1 {}, Type2 {}) {
-        }
-        pair(const pair<Type1, Type2> &other) : pair {*other.n1->p, *other.n2->p} {
-        }
-        pair(const pair<Type1, Type2> &&other) {
-            this->n1 = other.n1;
-            this->n2 = other.n2;
-            other.n1 = nullptr;
-            other.n2 = nullptr;
-        }
-        ~pair() {
-            if (!ref) {
-                delete n1->p;
-                delete n2->p;
-                delete n1;
-                delete n2;
-            }
-        }
-
-        Type1 &first() noexcept {
-            return *n1->p;
-        }
-        const Type1 &first() const noexcept {
-            return const_cast<pair<Type1, Type2> *>(this)->first();
-        }
-        Type2 &second() {
-            if (n2->p == nullptr) {
-                throw exception::null_access {
-                    "Second value in pair is not initialized. this->second() is invalid."
-                };
-            }
-            return *n2->p;
-        }
-        const Type2 &second() const {
-            return const_cast<pair<Type1, Type2> *>(this)->second();
-        }
-
-        bool secondExists() const noexcept {
-            return n2->p != nullptr;
-        }
+        pair(const Type1 &, const Type2 &);
+        pair(const Type1 &);
+        pair();
+        pair(const pair<Type1, Type2> &);
+        pair(const pair<Type1, Type2> &&);
+        ~pair();
+        Type1 &first() noexcept;
+        const Type1 &first() const noexcept;
+        Type2 &second();
+        const Type2 &second() const;
+        bool secondExists() const noexcept;
     };
+    PAIR()::pair(_node<Type1> *n1, _node<Type2> *n2) : n1 {n1}, n2 {n2}, ref {true} {
+    }
+    PAIR()::pair(const Type1 &first, const Type2 &second) : ref {false} {
+        n1 = new _node<Type1> {};
+        n2 = new _node<Type2> {};
+        n1->p = new Type1 {first};
+        n2->p = new Type2 {second};
+    }
+    PAIR()::pair(const Type1 &first) : ref {false} {
+        n1 = new _node<Type1> {};
+        n2 = new _node<Type2> {};
+        n1->p = new Type1 {first};
+        n2->p = nullptr;
+    }
+    PAIR()::pair() : pair(Type1 {}, Type2 {}) {
+    }
+    PAIR()::pair(const pair<Type1, Type2> &other) : pair {*other.n1->p, *other.n2->p} {
+    }
+    PAIR()::pair(const pair<Type1, Type2> &&other) {
+        this->n1 = other.n1;
+        this->n2 = other.n2;
+        other.n1 = nullptr;
+        other.n2 = nullptr;
+    }
+    PAIR()::~pair() {
+        if (!ref) {
+            delete n1->p;
+            delete n2->p;
+            delete n1;
+            delete n2;
+        }
+    }
+    PAIR(Type1 &)::first() noexcept {
+        return *n1->p;
+    }
+    PAIR(const Type1 &)::first() const noexcept {
+        return const_cast<pair<Type1, Type2> *>(this)->first();
+    }
+    PAIR(Type2 &)::second() {
+        if (n2->p == nullptr) {
+            throw exception::null_access {
+                "Second value in pair is not initialized. this->second() is invalid."
+            };
+        }
+        return *n2->p;
+    }
+    PAIR(const Type2 &)::second() const {
+        return const_cast<pair<Type1, Type2> *>(this)->second();
+    }
+    PAIR(bool)::secondExists() const noexcept {
+        return n2->p != nullptr;
+    }
 
     // Iterator over an instance of structure.
     // `Type` can be equivalent to one of the following: `FirstType`, `SecondType`, or `pair<FirstType, SecondType`.
@@ -640,142 +682,159 @@ namespace ds {
         void *primary;
         _node<Type> *p;
 
-        iterator(void *primary, _node<Type> *p) : primary {primary}, p {p} {
-        }
+        iterator(void *, _node<Type> *);
 
-        void test_node_ptr() const {
-            if (p == nullptr) {
-                throw exception::null_access {"Iterator does not reference a valid starting point."};
-            }
-        }
-        void test_value_ptr() const {
-            if (p->p == nullptr) {
-                throw exception::null_access {"Iterator references null value."};
-            }
-        }
-        void test_ptr_2() const {
-            test_node_ptr();
-            test_value_ptr();
-        }
+        void test_node_ptr() const;
+        void test_value_ptr() const;
+        void test_ptr_2() const;
 
         public:
-        iterator() : iterator {nullptr, nullptr} {
-        }
-        iterator &operator=(const iterator &other) noexcept {
-            this->primary = other.primary;
-            this->p = other.p;
-            return *this;
-        }
-        bool operator==(const iterator &other) const noexcept {
-            return this->p == other.p;
-        }
-        bool valid() const noexcept {
-            return p != nullptr && p->p != nullptr;
-        }
-
-        Type &value() {
-            test_ptr_2();
-            return *p->p;
-        }
-        const Type &value() const {
-            return const_cast<iterator<Type> *>(this)->value();
-        }
-        Type &operator*() {
-            test_ptr_2();
-            return *p->p;
-        }
-        const Type &operator*() const {
-            return const_cast<iterator<Type> *>(this)->operator*();
-        }
-        Type *operator->() {
-            return &this->operator*();
-        }
-        const Type *operator->() const {
-            return const_cast<iterator<Type> *>(this)->operator->();
-        }
-
-        bool hasNext() const {
-            test_node_ptr();
-            return p->right != nullptr;
-        }
-        bool hasPrev() const {
-            test_node_ptr();
-            return p->left != nullptr;
-        }
-
-        Type &next() {
-            test_ptr_2();
-            Type &ret {*p->p};
-            p = p->right;
-            if (p == nullptr) {
-                throw exception::out_of_bounds {
-                    R"(ds::structure::iterator cannot advance to next element. 
-Next element does not exist. this->next() is invalid.)"
-                };
-            }
-            return ret;
-        }
-        iterator &operator++() { // Pre-increment.
-            test_node_ptr();
-            p = p->right;
-            if (p == nullptr) {
-                throw exception::out_of_bounds {
-                    R"(ds::structure::iterator pre-increment failed. 
-Next element does not exist. ++(*this) is invalid.)"
-                };
-            }
-            return *this;
-        }
-        iterator &operator++(int) { // Post-increment.
-            test_node_ptr();
-            iterator &ret {*this};
-            p = p->right;
-            if (p == nullptr) {
-                throw exception::out_of_bounds {
-                    R"(ds::structure::iterator post-increment failed. 
-Next element does not exist. (*this)++ is invalid.)"
-                };
-            }
-            return ret;
-        }
-
-        Type &prev() {
-            test_ptr_2();
-            Type &ret {*p->p};
-            p = p->left;
-            if (p == nullptr) {
-                throw exception::out_of_bounds {
-                    R"(ds::structure::iterator cannot advance to previous element. 
-Previous element does not exist. this->prev() is invalid.)"
-                };
-            }
-            return ret;
-        }
-
-        iterator &operator--() { // Pre-decrement.
-            test_node_ptr();
-            p = p->left;
-            if (p == nullptr) {
-                throw exception::out_of_bounds {
-                    R"(ds::structure::iterator pre-decrement failed. 
-Previous element does not exist. --(*this) is invalid.)"
-                };
-            }
-            return *this;
-        }
-        iterator &operator--(int) { // Post-decrement.
-            test_node_ptr();
-            iterator &ret {*this};
-            p = p->left;
-            if (p == nullptr) {
-                throw exception::out_of_bounds {
-                    R"(ds::structure::iterator post-decrement failed. 
-Previous element does not exist. (*this)-- is invalid.)"
-                };
-            }
-            return ret;
-        }
+        iterator();
+        iterator &operator=(const iterator &) noexcept;
+        bool operator==(const iterator &) const noexcept;
+        bool valid() const noexcept;
+        Type &value();
+        const Type &value() const;
+        Type &operator*();
+        const Type &operator*() const;
+        Type *operator->();
+        const Type *operator->() const;
+        bool hasNext() const;
+        bool hasPrev() const;
+        Type &next();
+        iterator &operator++();
+        iterator &operator++(int);
+        Type &prev();
+        iterator &operator--();
+        iterator &operator--(int);
     };
+    ITER()::iterator(void *primary, _node<Type> *p) : primary {primary}, p {p} {
+    }
+    ITER(void)::test_node_ptr() const {
+        if (p == nullptr) {
+            throw exception::null_access {"Iterator does not reference a valid starting point."};
+        }
+    }
+    ITER(void)::test_value_ptr() const {
+        if (p->p == nullptr) {
+            throw exception::null_access {"Iterator references null value."};
+        }
+    }
+    ITER(void)::test_ptr_2() const {
+        test_node_ptr();
+        test_value_ptr();
+    }
+    ITER()::iterator() : iterator {nullptr, nullptr} {
+    }
+    ITER(iterator<Type> &)::operator=(const iterator &other) noexcept {
+        this->primary = other.primary;
+        this->p = other.p;
+        return *this;
+    }
+    ITER(bool)::operator==(const iterator &other) const noexcept {
+        return this->p == other.p;
+    }
+    ITER(bool)::valid() const noexcept {
+        return p != nullptr && p->p != nullptr;
+    }
+    ITER(Type &)::value() {
+        test_ptr_2();
+        return *p->p;
+    }
+    ITER(const Type &)::value() const {
+        return const_cast<iterator<Type> *>(this)->value();
+    }
+    ITER(Type &)::operator*() {
+        test_ptr_2();
+        return *p->p;
+    }
+    ITER(const Type &)::operator*() const {
+        return const_cast<iterator<Type> *>(this)->operator*();
+    }
+    ITER(Type *)::operator->() {
+        return &this->operator*();
+    }
+    ITER(const Type *)::operator->() const {
+        return const_cast<iterator<Type> *>(this)->operator->();
+    }
+    ITER(bool)::hasNext() const {
+        test_node_ptr();
+        return p->right != nullptr;
+    }
+    ITER(bool)::hasPrev() const {
+        test_node_ptr();
+        return p->left != nullptr;
+    }
+    ITER(Type &)::next() {
+        test_ptr_2();
+        Type &ret {*p->p};
+        p = p->right;
+        if (p == nullptr) {
+            throw exception::out_of_bounds {
+                R"(ds::structure::iterator cannot advance to next element. 
+Next element does not exist. this->next() is invalid.)"
+            };
+        }
+        return ret;
+    }
+    ITER(iterator<Type> &)::operator++() { // Pre-increment.
+        test_node_ptr();
+        p = p->right;
+        if (p == nullptr) {
+            throw exception::out_of_bounds {
+                R"(ds::structure::iterator pre-increment failed. 
+Next element does not exist. ++(*this) is invalid.)"
+            };
+        }
+        return *this;
+    }
+    ITER(iterator<Type> &)::operator++(int) { // Post-increment.
+        test_node_ptr();
+        iterator &ret {*this};
+        p = p->right;
+        if (p == nullptr) {
+            throw exception::out_of_bounds {
+                R"(ds::structure::iterator post-increment failed. 
+Next element does not exist. (*this)++ is invalid.)"
+            };
+        }
+        return ret;
+    }
+    ITER(Type &)::prev() {
+        test_ptr_2();
+        Type &ret {*p->p};
+        p = p->left;
+        if (p == nullptr) {
+            throw exception::out_of_bounds {
+                R"(ds::structure::iterator cannot advance to previous element. 
+Previous element does not exist. this->prev() is invalid.)"
+            };
+        }
+        return ret;
+    }
+    ITER(iterator<Type> &)::operator--() { // Pre-decrement.
+        test_node_ptr();
+        p = p->left;
+        if (p == nullptr) {
+            throw exception::out_of_bounds {
+                R"(ds::structure::iterator pre-decrement failed. 
+Previous element does not exist. --(*this) is invalid.)"
+            };
+        }
+        return *this;
+    }
+    ITER(iterator<Type> &)::operator--(int) { // Post-decrement.
+        test_node_ptr();
+        iterator &ret {*this};
+        p = p->left;
+        if (p == nullptr) {
+            throw exception::out_of_bounds {
+                R"(ds::structure::iterator post-decrement failed. 
+Previous element does not exist. (*this)-- is invalid.)"
+            };
+        }
+        return ret;
+    }
 
     template<typename Type>
     ull default_hash(const Type &value) {
@@ -855,5 +914,11 @@ Previous element does not exist. (*this)-- is invalid.)"
 #undef FUNC_TEMPLATE
 #undef DEFAULT_HASH
 #undef DEFAULT_COMPARE
+
+#undef TYPE_CLASS
+#undef STRUCTURE
+#undef LL
+#undef PAIR
+#undef ITER
 
 #endif
