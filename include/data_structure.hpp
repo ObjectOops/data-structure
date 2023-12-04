@@ -9,45 +9,6 @@
 // Specifies to use a function pointer to the compare function for type `T`.
 #define dcomp_t(T) bool (*) (const T &, const T &)
 
-#define CLASS_TEMPLATE \
-template<\
-    typename FirstType, \
-    typename SecondType = int, \
-    typename Hash = dhash_t(FirstType), \
-    typename Compare = dcomp_t(FirstType), \
-    bool stInit = false \
->
-
-#define FUNC_TEMPLATE \
-template<\
-    typename FirstType, \
-    typename SecondType, \
-    typename Hash, \
-    typename Compare, \
-    bool stInit \
->
-
-#define TYPE_CLASS structure<FirstType, SecondType, Hash, Compare, stInit>
-#define STRUCTURE(RET) FUNC_TEMPLATE RET TYPE_CLASS
-#define LL(RET) FUNC_TEMPLATE template<typename _LLT> RET TYPE_CLASS::linkedlist_secondary<_LLT>
-#define PAIR(RET) template<typename Type1, typename Type2> RET pair<Type1, Type2>
-#define ITER(RET) template<typename Type> RET iterator<Type>
-
-// `DEFAULT_HASH` and `DEFAULT_COMPARE` are used internally to create default definitions 
-// for primitive types `PT`.
-
-#define DEFAULT_HASH(PT) \
-template<> \
-ull default_hash<PT>(const PT &value) { \
-    return value; \
-}
-
-#define DEFAULT_COMPARE(PT) \
-template<> \
-bool default_compare<PT>(const PT &lhs, const PT &rhs) { \
-    return lhs < rhs; \
-}
-
 namespace ds {
 
     typedef unsigned long long ull;
@@ -282,6 +243,28 @@ namespace ds {
 
     // End Forward Declarations =======================================
 
+#define CLASS_TEMPLATE \
+template<\
+    typename FirstType, \
+    typename SecondType = int, \
+    typename Hash = dhash_t(FirstType), \
+    typename Compare = dcomp_t(FirstType), \
+    bool stInit = false \
+>
+
+#define FUNC_TEMPLATE \
+template<\
+    typename FirstType, \
+    typename SecondType, \
+    typename Hash, \
+    typename Compare, \
+    bool stInit \
+>
+
+#define TYPE_CLASS structure<FirstType, SecondType, Hash, Compare, stInit>
+
+#define STRUCTURE(RET) FUNC_TEMPLATE RET TYPE_CLASS
+
     // The Data Structure.
     CLASS_TEMPLATE class structure {
 
@@ -303,6 +286,8 @@ namespace ds {
             protected:
             TYPE_CLASS *primary;
         };
+
+#define LL(RET) FUNC_TEMPLATE template<typename _LLT> RET TYPE_CLASS::linkedlist_secondary<_LLT>
 
         template<typename _LLT>
         struct linkedlist_secondary : public secondary {
@@ -588,6 +573,8 @@ namespace ds {
     _node<Type>::_node() {
     }
 
+#define PAIR(RET) template<typename Type1, typename Type2> RET pair<Type1, Type2>
+
     // Pair type.
     // Important: The second value may not be initialized. Check availability with `secondExists()`.
     template<typename Type1, typename Type2>
@@ -669,6 +656,8 @@ namespace ds {
     PAIR(bool)::secondExists() const noexcept {
         return n2->p != nullptr;
     }
+
+#define ITER(RET) template<typename Type> RET iterator<Type>
 
     // Iterator over an instance of structure.
     // `Type` can be equivalent to one of the following: `FirstType`, `SecondType`, or `pair<FirstType, SecondType`.
@@ -836,6 +825,21 @@ Previous element does not exist. (*this)-- is invalid.)"
         return ret;
     }
 
+// `DEFAULT_HASH` and `DEFAULT_COMPARE` are used internally to create default definitions 
+// for primitive types `PT`.
+
+#define DEFAULT_HASH(PT) \
+template<> \
+ull default_hash<PT>(const PT &value) { \
+    return value; \
+}
+
+#define DEFAULT_COMPARE(PT) \
+template<> \
+bool default_compare<PT>(const PT &lhs, const PT &rhs) { \
+    return lhs < rhs; \
+}
+
     template<typename Type>
     ull default_hash(const Type &value) {
         return value.hash();
@@ -912,13 +916,14 @@ Previous element does not exist. (*this)-- is invalid.)"
 
 #undef CLASS_TEMPLATE
 #undef FUNC_TEMPLATE
-#undef DEFAULT_HASH
-#undef DEFAULT_COMPARE
 
 #undef TYPE_CLASS
 #undef STRUCTURE
 #undef LL
 #undef PAIR
 #undef ITER
+
+#undef DEFAULT_HASH
+#undef DEFAULT_COMPARE
 
 #endif
