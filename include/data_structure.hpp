@@ -247,8 +247,8 @@ namespace ds {
 template<\
     typename FirstType, \
     typename SecondType = int, \
-    typename Hash = dhash_t(FirstType), \
     typename Compare = dcomp_t(FirstType), \
+    typename Hash = dhash_t(FirstType), \
     bool stInit = false \
 >
 
@@ -256,12 +256,12 @@ template<\
 template<\
     typename FirstType, \
     typename SecondType, \
-    typename Hash, \
     typename Compare, \
+    typename Hash, \
     bool stInit \
 >
 
-#define TYPE_CLASS structure<FirstType, SecondType, Hash, Compare, stInit>
+#define TYPE_CLASS structure<FirstType, SecondType, Compare, Hash, stInit>
 
 #define STRUCTURE(RET) FUNC_TEMPLATE RET TYPE_CLASS
 
@@ -323,9 +323,9 @@ template<\
         linkedlist_secondary<SecondType> stll {this};
         linkedlist_secondary<pair<FirstType, SecondType>> pairll {this};
 
-        structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Hash & = default_hash, const Compare & = default_compare);
-        structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Hash & = default_hash, const Compare & = default_compare);
-        structure(ull, const Hash & = default_hash, const Compare & = default_compare);
+        structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Compare & = default_compare, const Hash & = default_hash);
+        structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Compare & = default_compare, const Hash & = default_hash);
+        structure(ull, const Compare & = default_compare, const Hash & = default_hash);
         structure(const TYPE_CLASS &);
         structure(const TYPE_CLASS &&) noexcept;
         ~structure();
@@ -338,8 +338,8 @@ template<\
     STRUCTURE()::structure(
         _argv<FirstType> argv, 
         ull n, 
-        const Hash &hash, 
-        const Compare &compare
+        const Compare &compare, 
+        const Hash &hash
     ) : 
         hash {hash}, compare {compare} 
     {
@@ -360,8 +360,8 @@ template<\
     STRUCTURE()::structure(
         _argv<ipair<FirstType, SecondType>> argv, 
         ull n, 
-        const Hash &hash, 
-        const Compare &compare
+        const Compare &compare, 
+        const Hash &hash
     ) : 
         hash {hash}, compare {compare} 
     {
@@ -381,10 +381,9 @@ template<\
     }
     STRUCTURE()::structure(
         ull n, 
-        const Hash &hash, 
-        const Compare &compare
-    ) {
-        structure(args<FirstType>(), n, hash, compare);
+        const Compare &compare, 
+        const Hash &hash
+    ) : structure(args<FirstType>(), n, compare, hash) {
     }
     STRUCTURE()::~structure() {
         util_deallocInternal(ft_baseHead, nullptr);

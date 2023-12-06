@@ -22,7 +22,7 @@ struct functor2 {
 
 int main() {
 
-    ds::structure<obj, int, functor2, functor1> test {64, functor2 {}, functor1 {}};
+    ds::structure<obj, int, functor1, functor2> test {64, functor1 {}, functor2 {}};
 
     return 0;
 }
