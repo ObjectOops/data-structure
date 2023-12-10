@@ -100,10 +100,10 @@ namespace ds {
         char *s;
         ull len;
 
+        public:
         // Constructor for internal use.
         str(char *, ull);
         
-        public:
         str(const char *);
         str(const str &);
         str(str &&) noexcept;
@@ -120,8 +120,8 @@ namespace ds {
         str &operator+=(const str &);
         bool operator==(const str &) const noexcept;
     };
-    // Constructor for internal use.
-    str::str(char *s, ull len) : s {s}, len {len} {
+    // Constructor for internal use only!
+    str::str(char *_s, ull _len) : s {_s}, len {_len} {
     }
     str::str(const char *src) {
         this->len = strlen(src);
@@ -178,6 +178,9 @@ namespace ds {
         return const_cast<str *>(this)->operator[](index);
     }
     str &str::operator=(const str &other) {
+        if (this == &other) {
+            return *this;
+        }
         delete[] s;
         s = new char [other.len + 1];
         memcpy(s, other.s, other.len);
@@ -186,6 +189,9 @@ namespace ds {
         return *this;
     }
     str &str::operator=(str &&other) {
+        if (this == &other) {
+            return *this;
+        }
         delete[] this->s;
         this->s = other.s;
         this->len = other.len;
@@ -911,6 +917,13 @@ bool default_compare<PT>(const PT &lhs, const PT &rhs) { \
             static constexpr bool result = true;
         };
     }
+}
+
+// `ds::str` custom literal.
+ds::str operator "" _s(const char *raw, size_t size) {
+    char *s = new char [size];
+    memcpy(s, raw, size);
+    return ds::str {s, size - 1};
 }
 
 #undef CLASS_TEMPLATE
