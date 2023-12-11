@@ -216,6 +216,15 @@ namespace ds {
         return strncmp(s, other.s, len < other.len ? other.len : len) == 0;
     }
 
+    namespace literals {
+        // `ds::str` custom literal.
+        str operator "" _s(const char *raw, size_t size) {
+            char *s = new char [size];
+            memcpy(s, raw, size);
+            return str {s, size - 1};
+        }
+    }
+
     // End Preceding Definitions ======================================
 
     // Begin Forward Declarations =====================================
@@ -917,13 +926,6 @@ bool default_compare<PT>(const PT &lhs, const PT &rhs) { \
             static constexpr bool result = true;
         };
     }
-}
-
-// `ds::str` custom literal.
-ds::str operator "" _s(const char *raw, size_t size) {
-    char *s = new char [size];
-    memcpy(s, raw, size);
-    return ds::str {s, size - 1};
 }
 
 #undef CLASS_TEMPLATE
