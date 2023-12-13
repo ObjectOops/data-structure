@@ -338,9 +338,19 @@ template<\
         linkedlist_secondary<SecondType> stll {this};
         linkedlist_secondary<pair<FirstType, SecondType>> pairll {this};
 
-        structure(_argv<FirstType> = args<FirstType>(), ull = 0, const Compare & = default_compare, const Hash & = default_hash);
-        structure(_argv<ipair<FirstType, SecondType>>, ull = 0, const Compare & = default_compare, const Hash & = default_hash);
+        // Quantity and elements.
+        structure(ull, _argv<FirstType>, const Compare & = default_compare, const Hash & = default_hash);
+        // Elements only.
+        structure(_argv<FirstType>, const Compare & = default_compare, const Hash & = default_hash);
+        // Quantity only.
         structure(ull, const Compare & = default_compare, const Hash & = default_hash);
+        // Neither quantity nor elements.
+        structure(const Compare & = default_compare, const Hash & = default_hash);
+        // Quantity and map.
+        structure(ull, _argv<ipair<FirstType, SecondType>>, const Compare & = default_compare, const Hash & = default_hash);
+        // Map only.
+        structure(_argv<ipair<FirstType, SecondType>>, const Compare & = default_compare, const Hash & = default_hash);
+
         structure(const TYPE_CLASS &);
         structure(const TYPE_CLASS &&) noexcept;
         ~structure();
@@ -351,8 +361,8 @@ template<\
     // Private
 
     STRUCTURE()::structure(
-        _argv<FirstType> argv, 
         ull n, 
+        _argv<FirstType> argv, 
         const Compare &compare, 
         const Hash &hash
     ) : 
@@ -373,8 +383,30 @@ template<\
         size = argv.n > n ? argv.n : n;
     }
     STRUCTURE()::structure(
-        _argv<ipair<FirstType, SecondType>> argv, 
+        _argv<FirstType> argv, 
+        const Compare &compare, 
+        const Hash &hash
+    ) : structure {0, argv, compare, hash} 
+    {
+        // Prevent double free that can occur due to use of implicit copy constructor.
+        argv.v = nullptr;
+    }
+    STRUCTURE()::structure(
         ull n, 
+        const Compare &compare, 
+        const Hash &hash
+    ) : structure {n, args<FirstType>(), compare, hash} 
+    {
+    }
+    STRUCTURE()::structure(
+        const Compare &compare, 
+        const Hash &hash
+    ) : structure {0, args<FirstType>(), compare, hash} 
+    {
+    }
+    STRUCTURE()::structure(
+        ull n, 
+        _argv<ipair<FirstType, SecondType>> argv, 
         const Compare &compare, 
         const Hash &hash
     ) : 
@@ -395,10 +427,13 @@ template<\
         size = argv.n > n ? argv.n : n;
     }
     STRUCTURE()::structure(
-        ull n, 
+        _argv<ipair<FirstType, SecondType>> argv, 
         const Compare &compare, 
         const Hash &hash
-    ) : structure(args<FirstType>(), n, compare, hash) {
+    ) : structure {0, argv, compare, hash} 
+    {
+        // Prevent double free that can occur due to use of implicit copy constructor.
+        argv.v = nullptr;
     }
     STRUCTURE()::~structure() {
         util_deallocInternal(ft_baseHead, nullptr);
