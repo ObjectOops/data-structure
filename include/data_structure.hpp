@@ -436,10 +436,9 @@ template<\
         argv.v = nullptr;
     }
     STRUCTURE()::~structure() {
-        util_deallocInternal(ft_baseHead, nullptr);
-        util_deallocInternal(st_baseHead, nullptr);
-
-        if (pair_baseHead != nullptr) {
+        if (ft_baseHead || st_baseHead || pair_baseHead) {
+            util_deallocInternal(ft_baseHead, ftll.tail);
+            util_deallocInternal(st_baseHead, stll.tail);
             util_deallocInternal(pair_baseHead, pairll.tail);
         }
 
@@ -471,7 +470,11 @@ template<\
         pair_baseHead->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
         pair_baseTail = pair_baseHead;
 
+        ftll.head = ft_baseHead;
+        stll.head = st_baseHead;
         pairll.head = pair_baseHead;
+        ftll.refresh(ft_baseTail);
+        stll.refresh(st_baseTail);
         pairll.refresh(pair_baseTail);
     }
     STRUCTURE(void)::util_initStageTwo(FirstType *v1, SecondType *v2) {
@@ -487,6 +490,8 @@ template<\
         pairRightNode->p = new pair<FirstType, SecondType> {ft_baseTail, st_baseTail};
         util_link(pair_baseTail, pairRightNode);
 
+        ftll.refresh(ft_baseTail);
+        stll.refresh(st_baseTail);
         pairll.refresh(pair_baseTail);
     }
     STRUCTURE(template<typename _nodeType> void)::util_deallocInternal(
