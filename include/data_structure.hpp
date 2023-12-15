@@ -9,6 +9,9 @@
 // Specifies to use a function pointer to the compare function for type `T`.
 #define dcomp_t(T) bool (*) (const T &, const T &)
 
+// `if constexpr` when -std=c++17 or higher, `if` otherwise.
+#define constexpr_if #if __cplusplus > 201103L if constexpr #else if
+
 namespace ds {
 
     typedef unsigned long long ull;
