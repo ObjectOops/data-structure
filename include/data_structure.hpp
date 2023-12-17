@@ -100,17 +100,24 @@ namespace ds {
         }
     }
 
+    class str;
+    namespace literals {
+        str operator "" _s(const char *, size_t);
+    }
+
     // Basic string class.
     class str {
+
+        friend str literals::operator "" _s(const char *, size_t);
 
         private:
         char *s;
         ull len;
 
-        public:
         // Constructor for internal use.
         str(char *, ull);
-        
+
+        public:        
         str(const char *);
         str(const str &);
         str(str &&) noexcept;
