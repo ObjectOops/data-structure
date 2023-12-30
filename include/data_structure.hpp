@@ -336,6 +336,13 @@ template<\
             iterator<_LLT> end() const;
         };
 
+#define LL_EX(RET) FUNC_TEMPLATE template<typename _LLT> RET TYPE_CLASS::linkedlist_secondary_ex<_LLT>
+
+        template<typename _LLT>
+        struct linkedlist_secondary_ex : public linkedlist_secondary<_LLT> {
+            linkedlist_secondary_ex(TYPE_CLASS *);
+        };
+
         template<typename _nodeType>
         void util_link(_nodeType *&, _nodeType *&);
         SecondType *util_initSecondType();
@@ -348,9 +355,9 @@ template<\
         Hash hash;
         Compare compare;
 
-        linkedlist_secondary<FirstType> ftll {this};
+        linkedlist_secondary_ex<FirstType> ftll {this};
         linkedlist_secondary<SecondType> stll {this};
-        linkedlist_secondary<pair<FirstType, SecondType>> pairll {this};
+        linkedlist_secondary_ex<pair<FirstType, SecondType>> pairll {this};
 
         // Quantity and elements.
         structure(ull, _argv<FirstType>, const Compare & = default_compare, const Hash & = default_hash);
@@ -528,10 +535,10 @@ template<\
 
     // Private
 
-    LL()::linkedlist_secondary(
-        TYPE_CLASS *p
-    ) {
+    LL()::linkedlist_secondary(TYPE_CLASS *p) {
         secondary::primary = p;
+    }
+    LL_EX()::linkedlist_secondary_ex(TYPE_CLASS *p) : linkedlist_secondary<_LLT> {p} {
     }
     LL(void)::refresh(_node<_LLT> *node) {
         tail->left = node;
