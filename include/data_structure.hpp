@@ -127,7 +127,7 @@ namespace ds {
         str substr(ull, ull) const;
         const char *cstr() const noexcept;
         char &operator[](ull);
-        char operator[](ull) const;
+        const char &operator[](ull) const;
         str &operator=(const str &);
         str &operator=(str &&);
         str operator+(const str &) const;
@@ -188,7 +188,7 @@ namespace ds {
         }
         return s[index];
     }
-    char str::operator[](ull index) const {
+    const char &str::operator[](ull index) const {
         return const_cast<str *>(this)->operator[](index);
     }
     str &str::operator=(const str &other) {
