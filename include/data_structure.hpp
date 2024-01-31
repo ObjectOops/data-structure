@@ -334,6 +334,8 @@ template<\
             public:
             iterator<_LLT> begin() const;
             iterator<_LLT> end() const;
+
+            linkedlist_secondary &operator=(const linkedlist_secondary<_LLT> &) = delete;
         };
 
 #define LL_EX(RET) FUNC_TEMPLATE template<typename _LLT> RET TYPE_CLASS::linkedlist_secondary_ex<_LLT>
@@ -373,7 +375,8 @@ template<\
         structure(_argv<ipair<FirstType, SecondType>>, const Compare & = default_compare, const Hash & = default_hash);
 
         structure(const TYPE_CLASS &);
-        structure(const TYPE_CLASS &&) noexcept;
+        structure(TYPE_CLASS &&) noexcept;
+
         ~structure();
     };
 
@@ -410,7 +413,7 @@ template<\
     ) : structure {0, argv, compare, hash} 
     {
         // Prevent double free that can occur due to use of implicit copy constructor.
-        argv.v = nullptr;
+        // argv.v = nullptr;
     }
     STRUCTURE()::structure(
         ull n, 
@@ -454,7 +457,7 @@ template<\
     ) : structure {0, argv, compare, hash} 
     {
         // Prevent double free that can occur due to use of implicit copy constructor.
-        argv.v = nullptr;
+        // argv.v = nullptr;
     }
     STRUCTURE()::~structure() {
         if (ft_baseHead || st_baseHead || pair_baseHead) {
@@ -595,10 +598,27 @@ template<\
         _argv(const T **, ull);
 
         public:
+        _argv(const _argv<T> &);
+        _argv(_argv<T> &&) noexcept;
         ~_argv();
+
+        _argv &operator=(const _argv<T> &) = delete;
     };
     template<typename T>
     _argv<T>::_argv(const T **v, ull n) : v {v}, n {n} {
+    }
+    template<typename T>
+    _argv<T>::_argv(const _argv<T> &other) {
+        this->v = new const T* [other.n];
+        this->n = other.n;
+        memcpy(this->v, other.v, other.n * sizeof(T*));
+    }
+    template<typename T>
+    _argv<T>::_argv(_argv<T> &&other) noexcept {
+        this->v = other.v;
+        this->n = other.n;
+        other.v = nullptr;
+        other.n = 0;
     }
     template<typename T>
     _argv<T>::~_argv() {
@@ -671,7 +691,7 @@ template<\
         pair(const Type1 &);
         pair();
         pair(const pair<Type1, Type2> &);
-        pair(const pair<Type1, Type2> &&);
+        pair(pair<Type1, Type2> &&);
         ~pair();
         Type1 &first() noexcept;
         const Type1 &first() const noexcept;
@@ -697,7 +717,7 @@ template<\
     }
     PAIR()::pair(const pair<Type1, Type2> &other) : pair {*other.n1->p, *other.n2->p} {
     }
-    PAIR()::pair(const pair<Type1, Type2> &&other) {
+    PAIR()::pair(pair<Type1, Type2> &&other) {
         this->n1 = other.n1;
         this->n2 = other.n2;
         other.n1 = nullptr;
