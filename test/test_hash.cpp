@@ -1,3 +1,4 @@
+#include <iostream>
 #include <cassert>
 #include <string>
 
@@ -44,9 +45,12 @@ int main() {
     TEST_TYPE_2(bool, 1ull, 1ull)
 
     ds::str s {"test"};
+    const ds::str s_const {"test"};
     ds::structure<ds::str> test_str {};
+    const ds::structure<ds::str> test_str_const {};
 
     assert(ds::default_hash(s) == 0x74736574ull);
+    assert(ds::default_hash(s_const) == 0x74736574ull);
 
     std::string chars {"0123456789`~-=_+[]\\{}|;\':\",./<>?qwertyuiopasdfghjklzxcvbnm"};
     size_t len {chars.length()};
@@ -58,8 +62,13 @@ int main() {
             result += chars.at(rand() % len);
         }
         ds::str s {result.c_str()};
+        const ds::str s_const {result.c_str()};
+        std::cerr << "s: " << s.cstr() << ' ' << s_const.cstr() << '\n';
         ds::ull r1 {ds::default_hash(s)}, r2 {test_str.hash(s)};
+        ds::ull r3 {ds::default_hash(s_const)}, r4 {test_str.hash(s_const)};
         assert(r1 == r2);
+        assert(r3 == r4);
+        assert(r1 == r3);
     }
 
     return 0;

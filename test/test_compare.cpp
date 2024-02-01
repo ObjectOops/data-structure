@@ -36,9 +36,25 @@ int main() {
 
     ds::str s1 {"test1"};
     ds::str s2 {"test2"};
+    const ds::str s3 {"test1"};
+    const ds::str s4 {"test2"};
+    ds::structure<ds::str> test_str {};
+    const ds::structure<ds::str> test_str_const {};
 
     assert(ds::default_compare(s1, s2));
     assert(!(ds::default_compare(s2, s1)));
+    assert(ds::default_compare(s3, s4));
+    assert(!(ds::default_compare(s4, s3)));
+
+    assert(test_str.compare(s1, s2));
+    assert(!(test_str.compare(s2, s1)));
+    assert(test_str.compare(s3, s4));
+    assert(!(test_str.compare(s4, s3)));
+
+    assert(test_str_const.compare(s1, s2));
+    assert(!(test_str_const.compare(s2, s1)));
+    assert(test_str_const.compare(s3, s4));
+    assert(!(test_str_const.compare(s4, s3)));
 
     return 0;
 }

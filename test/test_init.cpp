@@ -1,6 +1,6 @@
+#include <iostream>
 #include <cassert>
 #include <string>
-#include <iostream>
 
 int main() {
 
@@ -23,14 +23,14 @@ int main() {
     for (std::string i : compile_test_names_fail) {
         std::string cmd {"cd ../../test && g++ -std=c++11 " + dir + i};
         int ret {system(cmd.c_str())};
-        std::cout << cmd << std::endl;
+        std::cerr << cmd << '\n';
         assert(WEXITSTATUS(ret) != 0);
     }
 
     for (std::string i : compile_test_names_success) {
         std::string cmd {"cd ../../test && g++ -std=c++11 " + dir + i};
         int ret {system(cmd.c_str())};
-        std::cout << cmd << std::endl;
+        std::cerr << cmd << '\n';
         assert(WEXITSTATUS(ret) == 0);
     }
 
