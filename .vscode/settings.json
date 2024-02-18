@@ -12,6 +12,15 @@
         "string": "cpp",
         "unordered_map": "cpp",
         "vector": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp",
+        "streambuf": "cpp",
+        "atomic": "cpp",
+        "cwchar": "cpp",
+        "exception": "cpp",
+        "iosfwd": "cpp",
+        "istream": "cpp",
+        "stdexcept": "cpp"
     }
 }
