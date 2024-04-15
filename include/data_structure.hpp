@@ -16,9 +16,6 @@
 #define if_constexpr if
 #endif
 
-// The purpose of this macro is to use commas as a part of other macro arguments.
-#define COMMA ,
-
 namespace ds {
 
     typedef unsigned long long ull;
@@ -329,7 +326,7 @@ template<\
 
 #define TYPE_CLASS structure<FirstType, SecondType, Compare, Hash, stInit>
 
-#define STRUCTURE(RET) FUNC_TEMPLATE RET TYPE_CLASS
+#define STRUCTURE(...) FUNC_TEMPLATE __VA_ARGS__ TYPE_CLASS
 
     // The Data Structure.
     CLASS_TEMPLATE class structure {
@@ -353,7 +350,7 @@ template<\
             TYPE_CLASS *primary;
         };
 
-#define LL(RET) FUNC_TEMPLATE template<typename _LLT> RET TYPE_CLASS::linkedlist_secondary<_LLT>
+#define LL(...) FUNC_TEMPLATE template<typename _LLT> __VA_ARGS__ TYPE_CLASS::linkedlist_secondary<_LLT>
 
         template<typename _LLT>
         struct linkedlist_secondary : public secondary {
@@ -377,7 +374,7 @@ template<\
             linkedlist_secondary &operator=(const linkedlist_secondary<_LLT> &) = delete;
         };
 
-#define LL_EX(RET) FUNC_TEMPLATE template<typename _LLT> RET TYPE_CLASS::linkedlist_secondary_ex<_LLT>
+#define LL_EX(...) FUNC_TEMPLATE template<typename _LLT> __VA_ARGS__ TYPE_CLASS::linkedlist_secondary_ex<_LLT>
 
         template<typename _LLT>
         struct linkedlist_secondary_ex : public linkedlist_secondary<_LLT> {
@@ -589,16 +586,16 @@ template<\
 
     // Public
 
-    LL(iterator<_LLT COMMA false>)::begin() {
+    LL(iterator<_LLT, false>)::begin() {
         return iterator<_LLT, false> {secondary::primary, head};
     }
-    LL(iterator<_LLT COMMA true>)::begin() const {
+    LL(iterator<_LLT, true>)::begin() const {
         return iterator<_LLT, true> {secondary::primary, head};
     }
-    LL(iterator<_LLT COMMA false>)::end() {
+    LL(iterator<_LLT, false>)::end() {
         return iterator<_LLT, false> {secondary::primary, tail};
     }
-    LL(iterator<_LLT COMMA true>)::end() const {
+    LL(iterator<_LLT, true>)::end() const {
         return iterator<_LLT, true> {secondary::primary, tail};
     }
 
@@ -713,7 +710,7 @@ template<\
     _node<Type>::_node() {
     }
 
-#define PAIR(RET) template<typename Type1, typename Type2> RET pair<Type1, Type2>
+#define PAIR(...) template<typename Type1, typename Type2> __VA_ARGS__ pair<Type1, Type2>
 
     // Pair type.
     // Important: The second value may not be initialized. Check availability with `secondExists()`.
@@ -797,7 +794,7 @@ template<\
         return n2->p != nullptr;
     }
 
-#define ITER(RET) template<typename Type, bool const_value> RET iterator<Type, const_value>
+#define ITER(...) template<typename Type, bool const_value> __VA_ARGS__ iterator<Type, const_value>
 
     // Iterator over an instance of structure.
     // `Type` can be equivalent to one of the following: `FirstType`, `SecondType`, or `pair<FirstType, SecondType>`.
@@ -860,7 +857,7 @@ template<\
     }
     ITER()::iterator() : iterator {nullptr, nullptr} {
     }
-    ITER(iterator<Type COMMA const_value> &)::operator=(const iterator &other) noexcept {
+    ITER(iterator<Type, const_value> &)::operator=(const iterator &other) noexcept {
         this->primary = other.primary;
         this->p = other.p;
         return *this;
@@ -871,15 +868,15 @@ template<\
     ITER(bool)::valid() const noexcept {
         return p != nullptr && p->p != nullptr;
     }
-    ITER(typename util::conditional<const_value COMMA const Type & COMMA Type &>::T)::value() const {
+    ITER(typename util::conditional<const_value, const Type &, Type &>::T)::value() const {
         test_ptr_2();
         return *p->p;
     }
-    ITER(typename util::conditional<const_value COMMA const Type & COMMA Type &>::T)::operator*() const {
+    ITER(typename util::conditional<const_value, const Type &, Type &>::T)::operator*() const {
         test_ptr_2();
         return *p->p;
     }
-    ITER(typename util::conditional<const_value COMMA const Type * COMMA Type *>::T)::operator->() const {
+    ITER(typename util::conditional<const_value, const Type *, Type *>::T)::operator->() const {
         return &this->operator*();
     }
     ITER(bool)::hasNext() const {
@@ -890,7 +887,7 @@ template<\
         test_node_ptr();
         return p->left != nullptr;
     }
-    ITER(typename util::conditional<const_value COMMA const Type & COMMA Type &>::T)::next() {
+    ITER(typename util::conditional<const_value, const Type &, Type &>::T)::next() {
         test_ptr_2();
         Type &ret {*p->p};
         p = p->right;
@@ -902,7 +899,7 @@ Next element does not exist. this->next() is invalid.)"
         }
         return ret;
     }
-    ITER(iterator<Type COMMA const_value> &)::operator++() { // Pre-increment.
+    ITER(iterator<Type, const_value> &)::operator++() { // Pre-increment.
         test_node_ptr();
         p = p->right;
         if (p == nullptr) {
@@ -913,7 +910,7 @@ Next element does not exist. ++(*this) is invalid.)"
         }
         return *this;
     }
-    ITER(iterator<Type COMMA const_value> &)::operator++(int) { // Post-increment.
+    ITER(iterator<Type, const_value> &)::operator++(int) { // Post-increment.
         test_node_ptr();
         iterator &ret {*this};
         p = p->right;
@@ -925,7 +922,7 @@ Next element does not exist. (*this)++ is invalid.)"
         }
         return ret;
     }
-    ITER(typename util::conditional<const_value COMMA const Type & COMMA Type &>::T)::prev() {
+    ITER(typename util::conditional<const_value, const Type &, Type &>::T)::prev() {
         test_ptr_2();
         Type &ret {*p->p};
         p = p->left;
@@ -937,7 +934,7 @@ Previous element does not exist. this->prev() is invalid.)"
         }
         return ret;
     }
-    ITER(iterator<Type COMMA const_value> &)::operator--() { // Pre-decrement.
+    ITER(iterator<Type, const_value> &)::operator--() { // Pre-decrement.
         test_node_ptr();
         p = p->left;
         if (p == nullptr) {
@@ -948,7 +945,7 @@ Previous element does not exist. --(*this) is invalid.)"
         }
         return *this;
     }
-    ITER(iterator<Type COMMA const_value> &)::operator--(int) { // Post-decrement.
+    ITER(iterator<Type, const_value> &)::operator--(int) { // Post-decrement.
         test_node_ptr();
         iterator &ret {*this};
         p = p->left;
@@ -1046,7 +1043,5 @@ bool default_compare<PT>(const PT &lhs, const PT &rhs) { \
 
 #undef DEFAULT_HASH
 #undef DEFAULT_COMPARE
-
-#undef COMMA
 
 #endif
